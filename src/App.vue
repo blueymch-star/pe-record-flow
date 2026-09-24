@@ -42,35 +42,42 @@
     <!-- 主要內容區 -->
     <main class="flex-1 p-4 space-y-5">
 
-      <!-- 分頁導航列 (Tab Navigation) -->
-      <nav class="grid grid-cols-4 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+      <!-- 分頁導航列 (Tab Navigation 5 大模式) -->
+      <nav class="grid grid-cols-5 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
         <button
           @click="currentTab = 'home'"
           class="py-2.5 rounded-lg transition text-center"
           :class="currentTab === 'home' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
-          🏠 首頁課表
+          🏠 首頁
         </button>
         <button
           @click="currentTab = 'record'"
           class="py-2.5 rounded-lg transition text-center"
           :class="currentTab === 'record' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
-          📋 速記網格
+          📋 速記
         </button>
         <button
           @click="currentTab = 'fitness'"
           class="py-2.5 rounded-lg transition text-center"
           :class="currentTab === 'fitness' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
-          🏃 體能連打
+          🏃 體適能
+        </button>
+        <button
+          @click="currentTab = 'skill'"
+          class="py-2.5 rounded-lg transition text-center"
+          :class="currentTab === 'skill' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+        >
+          🎯 技能
         </button>
         <button
           @click="currentTab = 'voice'"
           class="py-2.5 rounded-lg transition text-center"
           :class="currentTab === 'voice' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
-          🎙️ 語音日誌
+          🎙️ 語音
         </button>
       </nav>
 
@@ -84,7 +91,7 @@
         />
       </div>
 
-      <!-- 視圖 2: 手機端大按鈕座號網格與速記 -->
+      <!-- 視圖 2: 手機端大按鈕座號網格與速記 (身體狀況快篩 + 學習態度快記) -->
       <div v-show="currentTab === 'record'" class="space-y-4">
         <div class="flex items-center justify-between">
           <div>
@@ -110,7 +117,7 @@
         />
       </div>
 
-      <!-- 視圖 3: 體適能檢測概覽與啟動連打 -->
+      <!-- 視圖 3: 體適能檢測連打模式 -->
       <div v-show="currentTab === 'fitness'" class="space-y-4">
         <div class="glass-panel p-4 rounded-2xl border border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
@@ -152,7 +159,16 @@
         </div>
       </div>
 
-      <!-- 視圖 4: 語音備忘錄 (Web Speech API) -->
+      <!-- 視圖 4: 技能測驗輸入模式 (4 次測驗自訂名稱、免測機制、百分制折算) -->
+      <div v-show="currentTab === 'skill'" class="space-y-4">
+        <SkillExamView
+          :students="currentStudents"
+          :skill-records="skillRecords"
+          @update-skill-record="handleUpdateSkillRecord"
+        />
+      </div>
+
+      <!-- 視圖 5: 語音備忘錄 (Web Speech API) -->
       <div v-show="currentTab === 'voice'" class="space-y-4">
         <div class="glass-panel p-5 rounded-2xl border border-slate-700 text-center space-y-4">
           <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mx-auto border border-emerald-500/30">
@@ -283,6 +299,7 @@ import SmartTimetable from './components/SmartTimetable.vue';
 import SeatGrid from './components/SeatGrid.vue';
 import AttitudeDrawer from './components/AttitudeDrawer.vue';
 import NumberPadInput from './components/NumberPadInput.vue';
+import SkillExamView from './components/SkillExamView.vue';
 import { apiService } from './services/api';
 
 const currentTab = ref('home');
@@ -314,6 +331,7 @@ const bootstrapData = ref({
 const healthRecords = ref({}); // { [studentId]: '良好' | '不適' | '見習' }
 const attitudeRecords = ref({}); // { [studentId]: { netDelta: 0, violations: [], merits: [], observationNotes: '' } }
 const fitnessRecords = ref({}); // { [itemId]: { [studentId]: { rawValue, isExempt } } }
+const skillRecords = ref({}); // { [examIndex]: { [studentId]: { examIndex, itemName, rawValue, isExempt } } }
 const voiceNoteText = ref('');
 const isRecording = ref(false);
 
@@ -331,7 +349,11 @@ const unsavedCount = computed(() => {
   Object.values(fitnessRecords.value).forEach(itemMap => {
     fCount += Object.keys(itemMap).length;
   });
-  return hCount + aCount + fCount + (voiceNoteText.value ? 1 : 0);
+  let sCount = 0;
+  Object.values(skillRecords.value).forEach(examMap => {
+    sCount += Object.keys(examMap).length;
+  });
+  return hCount + aCount + fCount + sCount + (voiceNoteText.value ? 1 : 0);
 });
 
 onMounted(async () => {
@@ -382,6 +404,19 @@ function handleSaveFitnessRecord({ studentId, itemId, rawValue, isExempt }) {
     fitnessRecords.value[itemId] = {};
   }
   fitnessRecords.value[itemId][studentId] = { rawValue, isExempt };
+}
+
+function handleUpdateSkillRecord({ examIndex, studentId, itemName, rawValue, isExempt }) {
+  if (!skillRecords.value[examIndex]) {
+    skillRecords.value[examIndex] = {};
+  }
+  skillRecords.value[examIndex][studentId] = {
+    examIndex,
+    studentId,
+    itemName,
+    rawValue,
+    isExempt
+  };
 }
 
 function getFitnessCell(studentId, itemId) {
@@ -436,16 +471,31 @@ async function handleBatchSaveToGAS() {
     }
   });
 
+  const skillsList = [];
+  Object.values(skillRecords.value).forEach(examMap => {
+    Object.values(examMap).forEach(rec => {
+      skillsList.push({
+        studentId: rec.studentId,
+        classId: selectedClassId.value,
+        examIndex: rec.examIndex,
+        itemName: rec.itemName,
+        rawValue: rec.rawValue,
+        isExempt: Boolean(rec.isExempt)
+      });
+    });
+  });
+
   const payload = {
     dailyLog: {
       date: new Date().toLocaleDateString('sv'), // YYYY-MM-DD
       period: currentPeriod.value,
       classId: selectedClassId.value,
-      actualContent: '常規檢核、體能評量與運動常規表現',
+      actualContent: '常規檢核、技能評量與運動常規表現',
       voiceNotes: voiceNoteText.value
     },
     healthAttitudeList,
-    fitnessList
+    fitnessList,
+    skillsList
   };
 
   try {
