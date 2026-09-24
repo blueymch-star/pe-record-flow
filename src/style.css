@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 針對國小體育戶外手機/平板快速操作的極大靶區與觸控反饋 */
+@layer base {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  /* 點擊時彈性縮放反饋 */
+  .active-press:active {
+    transform: scale(0.95);
+    transition: transform 0.08s ease-in-out;
+  }
+
+  /* 玻璃擬態與陰影 */
+  .glass-panel {
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* 自訂滑動條隱藏但保留滾動功能 */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
