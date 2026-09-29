@@ -109,6 +109,79 @@ export const apiService = {
     }
   },
 
+  /**
+   * 後台儲存學生名冊 (包含本機即時持久化與 GAS 同步)
+   */
+  async saveStudents(students) {
+    this.updateCachedField('students', students);
+    // 重新計算班級列表
+    const classSet = new Set(students.map(s => s.classId || s.ClassId).filter(Boolean));
+    if (classSet.size > 0) {
+      this.updateCachedField('classes', Array.from(classSet));
+    }
+    return this.postActionToGAS('saveStudents', students, '名冊已於本機儲存');
+  },
+
+  /**
+   * 後台儲存課表 (包含本機即時持久化與 GAS 同步)
+   */
+  async saveTimetable(timetable) {
+    this.updateCachedField('timetable', timetable);
+    return this.postActionToGAS('saveTimetable', timetable, '課表已於本機儲存');
+  },
+
+  /**
+   * 後台儲存上課進度 (包含本機即時持久化與 GAS 同步)
+   */
+  async saveCurriculum(curriculum) {
+    this.updateCachedField('curriculum', curriculum);
+    return this.postActionToGAS('saveCurriculum', curriculum, '課程進度已於本機儲存');
+  },
+
+  /**
+   * 通用 POST 動作至 GAS
+   */
+  async postActionToGAS(action, data, localSuccessMsg) {
+    const gasUrl = this.getGasUrl();
+    if (!gasUrl) {
+      return {
+        success: true,
+        offline: true,
+        message: `${localSuccessMsg} (尚未配置 GAS 網址，已離線保存)`
+      };
+    }
+
+    try {
+      const resp = await fetch(gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, data, timestamp: new Date().toISOString() })
+      });
+      const result = await resp.json();
+      return result;
+    } catch (err) {
+      console.warn(`同步 ${action} 至 GAS 失敗:`, err);
+      return {
+        success: true,
+        offline: true,
+        message: `${localSuccessMsg} (雲端同步暫時受阻，已本機保存)`
+      };
+    }
+  },
+
+  /**
+   * 更新本機 bootstrap 快取指定欄位
+   */
+  updateCachedField(field, value) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEYS.LOCAL_DATA) || '{}');
+      cached[field] = value;
+      localStorage.setItem(STORAGE_KEYS.LOCAL_DATA, JSON.stringify(cached));
+    } catch (e) {
+      console.warn('更新本機快取失敗', e);
+    }
+  },
+
   enqueueOfflineData(item) {
     const queue = this.getOfflineQueue();
     queue.push(item);
@@ -127,3 +200,4 @@ export const apiService = {
     localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
   }
 };
+

@@ -314,6 +314,15 @@ function doPost(e) {
       case 'batchImportStudents':
         result = handleBatchImportStudents(payload.data);
         break;
+      case 'saveStudents':
+        result = handleSaveStudents(payload.data);
+        break;
+      case 'saveTimetable':
+        result = handleSaveTimetable(payload.data);
+        break;
+      case 'saveCurriculum':
+        result = handleSaveCurriculum(payload.data);
+        break;
       default:
         result = { success: false, error: 'Unknown post action: ' + action };
     }
@@ -472,11 +481,91 @@ function handleBatchImportStudents(students) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.STUDENTS);
   const rows = students.map(s => [
-    s.ClassId, s.StudentId, s.SeatNo, s.Name, s.Gender, s.MedicalNotes || ''
+    s.ClassId || s.classId,
+    s.StudentId || s.studentId,
+    s.SeatNo || s.seatNo,
+    s.Name || s.name,
+    s.Gender || s.gender || 'M',
+    s.MedicalNotes || s.medicalNotes || ''
   ]);
   const startRow = sheet.getLastRow() + 1;
   sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
   return { success: true, count: rows.length };
+}
+
+/**
+ * 後台儲存完整學生名冊 (全表更新替換)
+ */
+function handleSaveStudents(students) {
+  if (!Array.isArray(students)) {
+    return { success: false, error: '名冊格式錯誤，需為陣列' };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.STUDENTS);
+  // 清除除了第 1 列表頭外的舊資料
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+  }
+  if (students.length > 0) {
+    const rows = students.map(s => [
+      s.classId || s.ClassId || '',
+      s.studentId || s.StudentId || '',
+      Number(s.seatNo || s.SeatNo || 0),
+      s.name || s.Name || '',
+      s.gender || s.Gender || 'M',
+      s.medicalNotes || s.MedicalNotes || ''
+    ]);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  return { success: true, count: students.length, message: '學生名冊已成功同步更新！' };
+}
+
+/**
+ * 後台儲存課表 (全表更新替換)
+ */
+function handleSaveTimetable(timetable) {
+  if (!Array.isArray(timetable)) {
+    return { success: false, error: '課表格式錯誤，需為陣列' };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.TIMETABLE);
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+  }
+  if (timetable.length > 0) {
+    const rows = timetable.map(t => [
+      Number(t.dayOfWeek || t.DayOfWeek || 1),
+      Number(t.period || t.Period || 1),
+      t.classId || t.ClassId || '',
+      t.location || t.Location || ''
+    ]);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  return { success: true, count: timetable.length, message: '週課表已成功同步更新！' };
+}
+
+/**
+ * 後台儲存課程進度規劃 (全表更新替換)
+ */
+function handleSaveCurriculum(curriculum) {
+  if (!Array.isArray(curriculum)) {
+    return { success: false, error: '課程進度格式錯誤，需為陣列' };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.CURRICULUM);
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
+  }
+  if (curriculum.length > 0) {
+    const rows = curriculum.map(c => [
+      Number(c.weekNo || c.WeekNo || 1),
+      c.unitTitle || c.UnitTitle || '',
+      c.suggestedContent || c.SuggestedContent || '',
+      c.keyFocus || c.KeyFocus || ''
+    ]);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  return { success: true, count: curriculum.length, message: '上課進度與課程計畫已成功同步更新！' };
 }
 
 // -------------------------------------------------------------

@@ -19,6 +19,16 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- 後台管理切換按鈕 -->
+        <button
+          @click="currentTab = currentTab === 'admin' ? 'home' : 'admin'"
+          class="active-press px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition"
+          :class="currentTab === 'admin' ? 'bg-indigo-600 text-white border-indigo-400 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
+          title="切換後台資料編輯"
+        >
+          <span>{{ currentTab === 'admin' ? '📋 返回速記' : '🛠️ 後台管理' }}</span>
+        </button>
+
         <!-- 離線 / 連線狀態指示 -->
         <span
           class="text-[11px] font-semibold px-2 py-1 rounded-full border flex items-center gap-1"
@@ -42,8 +52,8 @@
     <!-- 主要內容區 -->
     <main class="flex-1 p-4 space-y-5">
 
-      <!-- 分頁導航列 (Tab Navigation 5 大模式) -->
-      <nav class="grid grid-cols-5 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+      <!-- 分頁導航列 (前台 5 大模式，進入後台時自動隱藏) -->
+      <nav v-show="currentTab !== 'admin'" class="grid grid-cols-5 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
         <button
           @click="currentTab = 'home'"
           class="py-2.5 rounded-lg transition text-center"
@@ -202,10 +212,24 @@
         </div>
       </div>
 
+      <!-- 視圖 6: 體育教學管理後台 (編輯班級名冊、週課表、上課進度) -->
+      <div v-show="currentTab === 'admin'" class="space-y-4">
+        <AdminManageView
+          :students="bootstrapData.students"
+          :timetable="bootstrapData.timetable"
+          :curriculum="bootstrapData.curriculum"
+          :classes="bootstrapData.classes"
+          @save-students="handleSaveStudentsFromAdmin"
+          @save-timetable="handleSaveTimetableFromAdmin"
+          @save-curriculum="handleSaveCurriculumFromAdmin"
+          @toast="showToast"
+        />
+      </div>
+
     </main>
 
-    <!-- 底部固定儲存浮動列 (課後 10 分鐘一鍵批次同步) -->
-    <div class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 max-w-2xl mx-auto flex items-center justify-between gap-3">
+    <!-- 底部固定儲存浮動列 (前台課後 10 分鐘一鍵批次同步，後台時自動隱藏) -->
+    <div v-if="currentTab !== 'admin'" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 max-w-2xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-slate-400">
         <span class="font-bold text-white">{{ selectedClassId }} 班速記</span>
         <span class="ml-1 text-[11px]">異動 {{ unsavedCount }} 筆</span>
@@ -300,6 +324,7 @@ import SeatGrid from './components/SeatGrid.vue';
 import AttitudeDrawer from './components/AttitudeDrawer.vue';
 import NumberPadInput from './components/NumberPadInput.vue';
 import SkillExamView from './components/SkillExamView.vue';
+import AdminManageView from './components/AdminManageView.vue';
 import { apiService } from './services/api';
 
 const currentTab = ref('home');
@@ -569,5 +594,31 @@ function showToast(msg, type = 'success') {
   setTimeout(() => {
     toastMessage.value = '';
   }, 3200);
+}
+
+// -------------------------------------------------------------
+// 後台管理存檔動作 (班級名冊、週課表、上課進度)
+// -------------------------------------------------------------
+async function handleSaveStudentsFromAdmin(updatedStudents) {
+  bootstrapData.value.students = updatedStudents;
+  const newClasses = Array.from(new Set(updatedStudents.map(s => s.classId || s.ClassId).filter(Boolean)));
+  if (newClasses.length > 0) {
+    bootstrapData.value.classes = newClasses;
+  }
+  initDefaultHealth(selectedClassId.value);
+  const res = await apiService.saveStudents(updatedStudents);
+  showToast(res.message || '學生名冊已成功更新！', res.success ? 'success' : 'error');
+}
+
+async function handleSaveTimetableFromAdmin(updatedTimetable) {
+  bootstrapData.value.timetable = updatedTimetable;
+  const res = await apiService.saveTimetable(updatedTimetable);
+  showToast(res.message || '週課表已成功更新！', res.success ? 'success' : 'error');
+}
+
+async function handleSaveCurriculumFromAdmin(updatedCurriculum) {
+  bootstrapData.value.curriculum = updatedCurriculum;
+  const res = await apiService.saveCurriculum(updatedCurriculum);
+  showToast(res.message || '上課進度計畫已成功更新！', res.success ? 'success' : 'error');
 }
 </script>
