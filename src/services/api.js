@@ -1,13 +1,13 @@
 /**
  * PE Record Flow API 與離線同步模組
  */
-import { MOCK_STUDENTS, MOCK_TIMETABLE, MOCK_CURRICULUM } from './mockData';
+import { MOCK_STUDENTS, MOCK_TIMETABLE, MOCK_CURRICULUM, MOCK_CLASSES } from './mockData';
 import { NORMS_TABLE } from './norms';
 
 const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
-  LOCAL_DATA: 'pe_cached_bootstrap_data'
+  LOCAL_DATA: 'pe_cached_bootstrap_data_v2' // 使用新版 key 確保載入新課表與教學進度
 };
 
 export const apiService = {
@@ -56,11 +56,12 @@ export const apiService = {
       }
     }
 
-    // 預設 Mock 資料
+    // 預設 Mock 資料 (張永明老師：5丁、5戊、6甲、6乙，115學年度上學期)
     return {
       success: true,
       isMock: true,
-      classes: ['501', '502', '601', '602'],
+      teacher: '張永明',
+      classes: MOCK_CLASSES,
       students: MOCK_STUDENTS,
       timetable: MOCK_TIMETABLE,
       curriculum: MOCK_CURRICULUM,

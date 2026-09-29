@@ -328,8 +328,8 @@ import AdminManageView from './components/AdminManageView.vue';
 import { apiService } from './services/api';
 
 const currentTab = ref('home');
-const selectedClassId = ref('501');
-const currentPeriod = ref(2);
+const selectedClassId = ref('5丁');
+const currentPeriod = ref(6);
 
 const isOnline = ref(navigator.onLine);
 const isSaving = ref(false);
@@ -343,9 +343,9 @@ const isKeypadOpen = ref(false);
 const toastMessage = ref('');
 const toastType = ref('success');
 
-// 初始資料集合
+// 初始資料集合 (大庄國小 115上 體育科)
 const bootstrapData = ref({
-  classes: ['501', '502', '601', '602'],
+  classes: ['5丁', '5戊', '6甲', '6乙'],
   students: [],
   timetable: [],
   curriculum: [],

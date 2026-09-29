@@ -7,11 +7,11 @@
           <h2 class="text-base font-bold text-white flex items-center gap-2">
             <span>🛠️ 體育教學管理後台</span>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 border border-emerald-500/30">
-              全域設定
+              新竹市大庄國小 115上 · 張永明 老師
             </span>
           </h2>
           <p class="text-xs text-slate-400 mt-0.5">
-            維護班級名冊與轉學生、排定全週課表、編輯各週教學單元進度
+            維護 5丁、5戊、6甲、6乙 名冊與轉學生、週一至週五課表 (第1~7節)、五上/六上教學進度表 (21週)
           </p>
         </div>
 
@@ -28,14 +28,14 @@
             class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border"
             :class="activeSubTab === 'timetable' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
-            📅 週課表
+            📅 週課表 (8節)
           </button>
           <button
             @click="activeSubTab = 'curriculum'"
             class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border"
             :class="activeSubTab === 'curriculum' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
-            📚 教學進度
+            📚 教學進度 (21週)
           </button>
         </div>
       </div>
@@ -161,12 +161,12 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- 子分頁 2：週課表設定 -->
+    <!-- 子分頁 2：週課表設定 (依據課表.pdf，完整 1 至 7 節) -->
     <!-- ========================================================================= -->
     <div v-show="activeSubTab === 'timetable'" class="space-y-4">
       <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h3 class="text-sm font-bold text-white">體育週課表編輯 (週一至週五，第 1 至第 5 節)</h3>
+          <h3 class="text-sm font-bold text-white">張永明老師 週課表設定 (週一至週五，第 1 至第 7 節，共 8 節課)</h3>
           <p class="text-xs text-slate-400 mt-0.5">點選任一節次即可設定授課班級與上課地點，首頁時間感知雷達將即時連動</p>
         </div>
 
@@ -179,7 +179,7 @@
         </button>
       </div>
 
-      <!-- 週課表矩陣編輯器 -->
+      <!-- 週課表矩陣編輯器 (第 1 至 7 節) -->
       <div class="glass-panel rounded-2xl border border-slate-700/80 p-4">
         <div class="grid grid-cols-6 gap-2 text-center text-xs font-bold mb-2">
           <div class="py-2 rounded bg-slate-800/80 text-slate-400">節次</div>
@@ -189,7 +189,7 @@
         </div>
 
         <div class="space-y-2">
-          <div v-for="period in [1, 2, 3, 4, 5]" :key="period" class="grid grid-cols-6 gap-2">
+          <div v-for="period in [1, 2, 3, 4, 5, 6, 7]" :key="period" class="grid grid-cols-6 gap-2">
             <!-- 節次名稱與時間 -->
             <div class="rounded-xl p-2 bg-slate-850/80 border border-slate-800 flex flex-col justify-center items-center text-center">
               <span class="font-black text-xs text-slate-300">第 {{ period }} 節</span>
@@ -201,7 +201,7 @@
               v-for="day in 5"
               :key="day"
               @click="openEditLessonModal(day, period)"
-              class="min-h-[64px] rounded-xl p-2 border flex flex-col justify-center items-center text-center cursor-pointer active-press transition"
+              class="min-h-[58px] rounded-xl p-2 border flex flex-col justify-center items-center text-center cursor-pointer active-press transition"
               :class="getTimetableEntry(day, period)
                 ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200 hover:border-emerald-400'
                 : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-600'"
@@ -224,16 +224,34 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- 子分頁 3：上課進度與課程規劃 -->
+    <!-- 子分頁 3：上課進度與課程規劃 (支援五年級與六年級，各 21 週) -->
     <!-- ========================================================================= -->
     <div v-show="activeSubTab === 'curriculum'" class="space-y-4">
       <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h3 class="text-sm font-bold text-white">體育教學進度與評量檢核計畫</h3>
-          <p class="text-xs text-slate-400 mt-0.5">自訂全學期各週單元主題、建議內容與檢核重點，首頁自動指引</p>
+          <h3 class="text-sm font-bold text-white">體育教學進度與評量檢核計畫 (115學年度上學期，共21週)</h3>
+          <p class="text-xs text-slate-400 mt-0.5">依據教育部課綱與學校行事曆，支援五上、六上獨立單元與評量規劃</p>
         </div>
 
         <div class="flex items-center gap-2">
+          <!-- 年級切換 -->
+          <div class="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700 text-xs font-bold">
+            <button
+              @click="curriculumGrade = 5"
+              class="px-3 py-1.5 rounded-lg transition"
+              :class="curriculumGrade === 5 ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+            >
+              五年級 (21週)
+            </button>
+            <button
+              @click="curriculumGrade = 6"
+              class="px-3 py-1.5 rounded-lg transition"
+              :class="curriculumGrade === 6 ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+            >
+              六年級 (21週)
+            </button>
+          </div>
+
           <button
             @click="addNewWeekPlan"
             class="active-press px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-bold flex items-center gap-1"
@@ -250,11 +268,11 @@
         </div>
       </div>
 
-      <!-- 週次列表 -->
+      <!-- 週次列表 (過濾當前選取之年級) -->
       <div class="space-y-3">
         <div
-          v-for="(plan, idx) in localCurriculum"
-          :key="plan.weekNo"
+          v-for="plan in filteredCurriculum"
+          :key="plan.weekNo + '_' + (plan.grade || curriculumGrade)"
           class="glass-panel rounded-2xl border border-slate-700/80 p-4 space-y-3"
         >
           <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
@@ -262,46 +280,64 @@
               <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-black flex items-center justify-center text-xs border border-emerald-500/30">
                 W{{ plan.weekNo }}
               </span>
-              <span class="text-xs font-bold text-slate-400">第 {{ plan.weekNo }} 週課程單元</span>
+              <div>
+                <span class="text-xs font-black text-white">第 {{ plan.weekNo }} 週課程單元</span>
+                <span v-if="plan.dateRange" class="text-[11px] text-slate-400 font-mono ml-2">({{ plan.dateRange }})</span>
+              </div>
             </div>
 
-            <button
-              @click="deleteWeekPlan(idx)"
-              class="p-1 rounded-lg text-slate-500 hover:text-red-400 text-xs"
-              title="刪除此週"
-            >
-              🗑️ 刪除
-            </button>
+            <div class="flex items-center gap-2">
+              <span v-if="plan.schoolEvent" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/40">
+                🔔 {{ plan.schoolEvent }}
+              </span>
+              <button
+                @click="deleteWeekPlan(plan)"
+                class="p-1 rounded-lg text-slate-500 hover:text-red-400 text-xs"
+                title="刪除此週"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <label class="block text-[11px] font-bold text-slate-400 mb-1">單元名稱：</label>
               <input
                 v-model="plan.unitTitle"
                 type="text"
                 class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                placeholder="例：立定跳遠與下肢爆發力"
+                placeholder="例：田徑、羽球、籃球"
               />
             </div>
 
             <div>
-              <label class="block text-[11px] font-bold text-slate-400 mb-1">建議教學活動內容：</label>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">上課場地：</label>
+              <input
+                v-model="plan.venue"
+                type="text"
+                class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                placeholder="例：體育館、操場、籃球場"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">教學活動重點：</label>
               <input
                 v-model="plan.suggestedContent"
                 type="text"
                 class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                placeholder="例：雙腳同時起跳落地動作分析、連續跳躍"
+                placeholder="活動內容"
               />
             </div>
 
             <div>
-              <label class="block text-[11px] font-bold text-slate-400 mb-1">評量檢核重點：</label>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1">評量方式：</label>
               <input
-                v-model="plan.keyFocus"
+                v-model="plan.evalMethod"
                 type="text"
                 class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                placeholder="例：起跳膝關節屈曲角度、落地緩衝"
+                placeholder="技能操作70% 學習態度20% 體育常識10%"
               />
             </div>
           </div>
@@ -372,7 +408,7 @@
             <input
               v-model="studentForm.studentId"
               type="text"
-              placeholder="例：50199"
+              placeholder="例：5丁99"
               class="w-full bg-slate-800 text-slate-100 text-xs font-mono rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -409,7 +445,7 @@
       <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-xs w-full shadow-2xl space-y-4">
         <h3 class="font-black text-sm text-white">➕ 新增班級代號</h3>
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 mb-1">班級代號 (例：503、603)：</label>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">班級代號 (例：5丁、6甲)：</label>
           <input
             v-model="newClassName"
             type="text"
@@ -448,7 +484,7 @@
             v-model="batchImportText"
             rows="6"
             class="w-full bg-slate-800 font-mono text-xs text-slate-100 rounded-xl p-3 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            placeholder="例：&#10;1  陳小明  男  輕微氣喘&#10;2  林大同  男&#10;21 林依晨  女"
+            placeholder="例：&#10;1  陳小明  男  輕微氣喘&#10;2  林大同  男&#10;13 林依晨  女"
           ></textarea>
         </div>
 
@@ -491,7 +527,7 @@
             <input
               v-model="lessonForm.location"
               type="text"
-              placeholder="例：操場跑道、風雨球場、活動中心"
+              placeholder="例：操場、體育館、籃球場"
               class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -534,7 +570,7 @@ const props = defineProps({
   },
   classes: {
     type: Array,
-    default: () => ['501', '502', '601', '602']
+    default: () => ['5丁', '5戊', '6甲', '6乙']
   }
 });
 
@@ -547,13 +583,14 @@ const emit = defineEmits([
 
 const activeSubTab = ref('students');
 const isSaving = ref(false);
+const curriculumGrade = ref(5); // 5 or 6
 
 // 本地可編輯複本
 const localStudents = ref([]);
 const localTimetable = ref([]);
 const localCurriculum = ref([]);
 const localClasses = ref([]);
-const selectedClass = ref('501');
+const selectedClass = ref('5丁');
 
 // 同步傳入資料
 watch(
@@ -574,7 +611,7 @@ watch(
 );
 
 const classList = computed(() => {
-  return localClasses.value.length > 0 ? localClasses.value : ['501', '502', '601', '602'];
+  return localClasses.value.length > 0 ? localClasses.value : ['5丁', '5戊', '6甲', '6乙'];
 });
 
 const currentClassStudents = computed(() => {
@@ -603,7 +640,6 @@ const studentForm = ref({
 
 function openAddStudentModal() {
   isEditingStudent.value = false;
-  // 自動推薦下一個座號
   const maxSeat = currentClassStudents.value.reduce((max, s) => Math.max(max, Number(s.seatNo || 0)), 0);
   studentForm.value = {
     classId: selectedClass.value,
@@ -649,7 +685,6 @@ function saveStudentForm() {
       };
     }
   } else {
-    // 檢查學號或座號是否重複
     const existSeat = currentClassStudents.value.find(s => Number(s.seatNo) === Number(studentForm.value.seatNo));
     if (existSeat) {
       emit('toast', `座號 ${studentForm.value.seatNo} 號已存在，請更換座號`, 'error');
@@ -661,7 +696,7 @@ function saveStudentForm() {
       seatNo: studentForm.value.seatNo,
       name: studentForm.value.name.trim(),
       gender: studentForm.value.gender,
-      age: 11,
+      age: studentForm.value.classId.startsWith('5') ? 11 : 12,
       medicalNotes: studentForm.value.medicalNotes.trim()
     });
   }
@@ -701,7 +736,6 @@ function confirmBatchImport() {
 
   let addedCount = 0;
   lines.forEach((line) => {
-    // 支援 Tab 或多個空白分隔
     const parts = line.split(/[\t\s]+/);
     if (parts.length >= 2) {
       const seat = parseInt(parts[0], 10) || (addedCount + 1);
@@ -710,7 +744,6 @@ function confirmBatchImport() {
       const med = parts.slice(3).join(' ') || '';
 
       const stdId = `${selectedClass.value}${String(seat).padStart(2, '0')}`;
-      // 移除原座號如果存在
       localStudents.value = localStudents.value.filter(
         s => !(String(s.classId) === String(selectedClass.value) && Number(s.seatNo) === seat)
       );
@@ -721,7 +754,7 @@ function confirmBatchImport() {
         seatNo: seat,
         name,
         gender,
-        age: 11,
+        age: selectedClass.value.startsWith('5') ? 11 : 12,
         medicalNotes: med
       });
       addedCount++;
@@ -740,7 +773,7 @@ async function saveStudentsData() {
 }
 
 // -------------------------------------------------------------
-// 2. 課表管理邏輯
+// 2. 課表管理邏輯 (1 至 7 節)
 // -------------------------------------------------------------
 const showEditLessonModal = ref(false);
 const lessonForm = ref({
@@ -756,11 +789,13 @@ function getTimetableEntry(day, period) {
 
 function getPeriodDefaultTime(p) {
   const times = {
-    1: '08:35~09:15',
-    2: '09:25~10:05',
-    3: '10:20~11:00',
-    4: '11:10~11:50',
-    5: '13:20~14:00'
+    1: '08:40~09:20',
+    2: '09:30~10:10',
+    3: '10:30~11:10',
+    4: '11:20~12:00',
+    5: '13:20~14:00',
+    6: '14:10~14:50',
+    7: '15:10~15:50'
   };
   return times[p] || '';
 }
@@ -771,13 +806,12 @@ function openEditLessonModal(day, period) {
     dayOfWeek: day,
     period,
     classId: entry ? entry.classId : selectedClass.value,
-    location: entry ? entry.location : '操場跑道'
+    location: entry ? entry.location : '操場'
   };
   showEditLessonModal.value = true;
 }
 
 function saveLessonForm() {
-  // 移除既有節次
   localTimetable.value = localTimetable.value.filter(
     t => !(Number(t.dayOfWeek) === Number(lessonForm.value.dayOfWeek) && Number(t.period) === Number(lessonForm.value.period))
   );
@@ -787,7 +821,7 @@ function saveLessonForm() {
       dayOfWeek: Number(lessonForm.value.dayOfWeek),
       period: Number(lessonForm.value.period),
       classId: lessonForm.value.classId,
-      location: lessonForm.value.location.trim() || '操場跑道'
+      location: lessonForm.value.location.trim() || '操場'
     });
   }
 
@@ -810,23 +844,38 @@ async function saveTimetableData() {
 }
 
 // -------------------------------------------------------------
-// 3. 上課進度與課程規劃管理
+// 3. 上課進度與課程規劃管理 (五上 / 六上)
 // -------------------------------------------------------------
+const filteredCurriculum = computed(() => {
+  return localCurriculum.value
+    .filter(c => (c.grade ? Number(c.grade) === curriculumGrade.value : true))
+    .sort((a, b) => Number(a.weekNo) - Number(b.weekNo));
+});
+
 function addNewWeekPlan() {
-  const maxWeek = localCurriculum.value.reduce((max, c) => Math.max(max, Number(c.weekNo || 0)), 0);
+  const currentList = filteredCurriculum.value;
+  const maxWeek = currentList.reduce((max, c) => Math.max(max, Number(c.weekNo || 0)), 0);
   localCurriculum.value.push({
+    grade: curriculumGrade.value,
     weekNo: maxWeek + 1,
     unitTitle: `第 ${maxWeek + 1} 週體育單元`,
     suggestedContent: '單元基礎技能與分組實戰',
-    keyFocus: '動作規範與安全防護'
+    venue: '體育館',
+    keyFocus: '動作規範與安全防護',
+    evalMethod: '技能操作70% 學習態度20% 體育常識10%'
   });
-  emit('toast', `已新增第 ${maxWeek + 1} 週進度計畫`, 'success');
+  emit('toast', `已新增${curriculumGrade.value}年級第 ${maxWeek + 1} 週進度計畫`, 'success');
 }
 
-function deleteWeekPlan(index) {
+function deleteWeekPlan(plan) {
   if (confirm(`確定要刪除此週次的進度計畫嗎？`)) {
-    localCurriculum.value.splice(index, 1);
-    emit('toast', `已刪除週次進度`, 'success');
+    const idx = localCurriculum.value.findIndex(
+      c => c.weekNo === plan.weekNo && (c.grade ? c.grade === plan.grade : true)
+    );
+    if (idx > -1) {
+      localCurriculum.value.splice(idx, 1);
+      emit('toast', `已刪除週次進度`, 'success');
+    }
   }
 }
 
