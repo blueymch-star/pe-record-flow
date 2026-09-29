@@ -21,7 +21,7 @@
         </div>
         <div class="flex items-baseline gap-2 mt-1">
           <h2 class="text-3xl font-black tracking-tight text-white">
-            {{ recommendedLesson.classId }} 班
+            {{ recommendedLesson.classId }}
           </h2>
           <span class="text-lg font-bold text-emerald-200">
             第 {{ recommendedLesson.period }} 節 ({{ recommendedLesson.location }})
@@ -35,10 +35,10 @@
       <!-- 核心行動大按鈕 -->
       <div class="mt-4 pt-3 border-t border-emerald-400/30 flex items-center gap-3">
         <button
-          @click="$emit('select-class', { classId: recommendedLesson.classId, period: recommendedLesson.period, source: 'smart' })"
+          @click="$emit('select-class', { classId: recommendedLesson.classId, period: recommendedLesson.period, location: recommendedLesson.location, source: 'smart' })"
           class="flex-1 active-press bg-white hover:bg-emerald-50 text-emerald-900 font-black text-base py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition"
         >
-          <span>進入 {{ recommendedLesson.classId }} 班速記</span>
+          <span>進入 {{ recommendedLesson.classId }} 速記</span>
           <svg class="w-5 h-5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
@@ -59,12 +59,12 @@
         >
           <option value="" disabled>選擇班級</option>
           <option v-for="c in classOptions" :key="c" :value="c">
-            {{ c }} 班
+            {{ c }}
           </option>
         </select>
         <button
           :disabled="!manualClassId"
-          @click="$emit('select-class', { classId: manualClassId, period: 5, source: 'manual' })"
+          @click="$emit('select-class', { classId: manualClassId, period: 5, location: '操場', source: 'manual' })"
           class="active-press disabled:opacity-40 disabled:cursor-not-allowed bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold px-4 py-2 rounded-lg transition"
         >
           切換切入
@@ -170,7 +170,7 @@
             @click="handleCellClick(day, period)"
           >
             <template v-if="getLesson(day, period)">
-              <span class="font-black text-xs">{{ getLesson(day, period).classId }}班</span>
+              <span class="font-black text-xs">{{ getLesson(day, period).classId }}</span>
               <span class="text-[10px] opacity-80 scale-90 truncate max-w-full">{{ getLesson(day, period).location }}</span>
             </template>
             <template v-else>
@@ -197,7 +197,7 @@ const props = defineProps({
   },
   classes: {
     type: Array,
-    default: () => ['5丁', '5戊', '6甲', '6乙']
+    default: () => ['五丁', '五戊', '六甲', '六乙']
   }
 });
 
@@ -218,7 +218,7 @@ const periodTimeLabels = {
 };
 
 const classOptions = computed(() => {
-  return props.classes.length > 0 ? props.classes : ['5丁', '5戊', '6甲', '6乙'];
+  return props.classes.length > 0 ? props.classes : ['五丁', '五戊', '六甲', '六乙'];
 });
 
 // 時鐘感知與當前星期幾
@@ -241,9 +241,9 @@ const recommendedLesson = computed(() => {
       isPastRecent: true
     };
   }
-  // 預設推薦週一第6節 5丁
+  // 預設推薦週一第6節 五丁
   return {
-    classId: '5丁',
+    classId: '五丁',
     period: 6,
     location: '操場',
     startTime: '14:10',
@@ -292,7 +292,7 @@ function getTimetableCellClass(day, period) {
 function handleCellClick(day, period) {
   const lesson = getLesson(day, period);
   if (lesson) {
-    emit('select-class', { classId: lesson.classId, period: lesson.period, source: 'timetable' });
+    emit('select-class', { classId: lesson.classId, period: lesson.period, location: lesson.location, source: 'timetable' });
   }
 }
 </script>

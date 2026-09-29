@@ -7,7 +7,7 @@ import { NORMS_TABLE } from './norms';
 const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
-  LOCAL_DATA: 'pe_cached_bootstrap_data_v2' // 使用新版 key 確保載入新課表與教學進度
+  LOCAL_DATA: 'pe_cached_bootstrap_data_v3' // 確保載入簡化班級名稱 (五丁、五戊、六甲、六乙)
 };
 
 export const apiService = {
@@ -56,7 +56,7 @@ export const apiService = {
       }
     }
 
-    // 預設 Mock 資料 (張永明老師：5丁、5戊、6甲、6乙，115學年度上學期)
+    // 預設 Mock 資料 (張永明老師：五丁、五戊、六甲、六乙，115學年度上學期)
     return {
       success: true,
       isMock: true,

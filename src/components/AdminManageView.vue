@@ -11,7 +11,7 @@
             </span>
           </h2>
           <p class="text-xs text-slate-400 mt-0.5">
-            維護 5丁、5戊、6甲、6乙 名冊與轉學生、週一至週五課表 (第1~7節)、五上/六上教學進度表 (21週)
+            維護 五丁、五戊、六甲、六乙 名冊與轉學生、週一至週五課表 (第1~7節)、五上/六上教學進度表 (21週)
           </p>
         </div>
 
@@ -54,7 +54,7 @@
             class="bg-slate-800 text-white font-bold text-sm rounded-xl px-3 py-2 border border-slate-600 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           >
             <option v-for="c in classList" :key="c" :value="c">
-              {{ c }} 班 ({{ getStudentCountByClass(c) }} 人)
+              {{ c }} ({{ getStudentCountByClass(c) }} 人)
             </option>
           </select>
 
@@ -208,10 +208,10 @@
             >
               <template v-if="getTimetableEntry(day, period)">
                 <span class="font-black text-sm text-emerald-300">
-                  {{ getTimetableEntry(day, period).classId }} 班
+                  {{ getTimetableEntry(day, period).classId }}
                 </span>
                 <span class="text-[11px] text-slate-300 truncate max-w-full">
-                  {{ getTimetableEntry(day, period).location || '未設地點' }}
+                  {{ getTimetableEntry(day, period).location || '操場' }}
                 </span>
               </template>
               <template v-else>
@@ -313,12 +313,12 @@
 
             <div>
               <label class="block text-[11px] font-bold text-slate-400 mb-1">上課場地：</label>
-              <input
+              <select
                 v-model="plan.venue"
-                type="text"
                 class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                placeholder="例：體育館、操場、籃球場"
-              />
+              >
+                <option v-for="venue in STANDARD_VENUES" :key="venue" :value="venue">{{ venue }}</option>
+              </select>
             </div>
 
             <div>
@@ -408,7 +408,7 @@
             <input
               v-model="studentForm.studentId"
               type="text"
-              placeholder="例：5丁99"
+              placeholder="例：五丁01"
               class="w-full bg-slate-800 text-slate-100 text-xs font-mono rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
@@ -443,13 +443,13 @@
       class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
     >
       <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-xs w-full shadow-2xl space-y-4">
-        <h3 class="font-black text-sm text-white">➕ 新增班級代號</h3>
+        <h3 class="font-black text-sm text-white">➕ 新增班級</h3>
         <div>
-          <label class="block text-[11px] font-bold text-slate-400 mb-1">班級代號 (例：5丁、6甲)：</label>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">班級名稱 (例：五丁、五戊)：</label>
           <input
             v-model="newClassName"
             type="text"
-            placeholder="請輸入班級代號"
+            placeholder="請輸入班級名稱"
             class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           />
         </div>
@@ -470,7 +470,7 @@
       <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-lg w-full shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h3 class="font-black text-sm text-white">📋 批次貼上匯入至 {{ selectedClass }} 班</h3>
+            <h3 class="font-black text-sm text-white">📋 批次貼上匯入至 {{ selectedClass }}</h3>
             <p class="text-[11px] text-slate-400">支援從 Excel/Google Sheets 複製多行貼上</p>
           </div>
           <button @click="showBatchImportModal = false" class="text-slate-400 hover:text-white">✕</button>
@@ -518,18 +518,18 @@
               class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
             >
               <option value="">(空堂無排課)</option>
-              <option v-for="c in classList" :key="c" :value="c">{{ c }} 班</option>
+              <option v-for="c in classList" :key="c" :value="c">{{ c }}</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">上課地點：</label>
-            <input
+            <label class="block text-[11px] font-bold text-slate-400 mb-1">上課場地：</label>
+            <select
               v-model="lessonForm.location"
-              type="text"
-              placeholder="例：操場、體育館、籃球場"
               class="w-full bg-slate-800 text-slate-100 text-xs font-bold rounded-xl p-2.5 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            />
+            >
+              <option v-for="venue in STANDARD_VENUES" :key="venue" :value="venue">{{ venue }}</option>
+            </select>
           </div>
         </div>
 
@@ -554,6 +554,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { STANDARD_VENUES } from '../services/mockData';
 
 const props = defineProps({
   students: {
@@ -570,7 +571,7 @@ const props = defineProps({
   },
   classes: {
     type: Array,
-    default: () => ['5丁', '5戊', '6甲', '6乙']
+    default: () => ['五丁', '五戊', '六甲', '六乙']
   }
 });
 
@@ -590,7 +591,7 @@ const localStudents = ref([]);
 const localTimetable = ref([]);
 const localCurriculum = ref([]);
 const localClasses = ref([]);
-const selectedClass = ref('5丁');
+const selectedClass = ref('五丁');
 
 // 同步傳入資料
 watch(
@@ -611,7 +612,7 @@ watch(
 );
 
 const classList = computed(() => {
-  return localClasses.value.length > 0 ? localClasses.value : ['5丁', '5戊', '6甲', '6乙'];
+  return localClasses.value.length > 0 ? localClasses.value : ['五丁', '五戊', '六甲', '六乙'];
 });
 
 const currentClassStudents = computed(() => {
@@ -696,7 +697,7 @@ function saveStudentForm() {
       seatNo: studentForm.value.seatNo,
       name: studentForm.value.name.trim(),
       gender: studentForm.value.gender,
-      age: studentForm.value.classId.startsWith('5') ? 11 : 12,
+      age: (studentForm.value.classId.startsWith('5') || studentForm.value.classId.startsWith('五')) ? 11 : 12,
       medicalNotes: studentForm.value.medicalNotes.trim()
     });
   }
@@ -754,7 +755,7 @@ function confirmBatchImport() {
         seatNo: seat,
         name,
         gender,
-        age: selectedClass.value.startsWith('5') ? 11 : 12,
+        age: (selectedClass.value.startsWith('5') || selectedClass.value.startsWith('五')) ? 11 : 12,
         medicalNotes: med
       });
       addedCount++;
@@ -763,7 +764,7 @@ function confirmBatchImport() {
 
   batchImportText.value = '';
   showBatchImportModal.value = false;
-  emit('toast', `成功匯入 ${addedCount} 筆學生至 ${selectedClass.value} 班！`, 'success');
+  emit('toast', `成功匯入 ${addedCount} 筆學生至 ${selectedClass.value}！`, 'success');
 }
 
 async function saveStudentsData() {

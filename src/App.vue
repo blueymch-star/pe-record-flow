@@ -12,8 +12,12 @@
             <span>PE Record Flow</span>
             <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v4.0</span>
           </h1>
-          <p class="text-[11px] text-slate-400">
-            目前班級：<span class="font-bold text-emerald-300">{{ selectedClassId }} 班</span> (共 {{ currentStudents.length }} 人)
+          <p class="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+            <span>目前班級：<strong class="text-emerald-300">{{ selectedClassId }}</strong></span>
+            <span>·</span>
+            <span>場地：<strong class="text-emerald-300">{{ currentVenue }}</strong></span>
+            <span>·</span>
+            <span>共 {{ currentStudents.length }} 人</span>
           </p>
         </div>
       </div>
@@ -101,18 +105,29 @@
         />
       </div>
 
-      <!-- 視圖 2: 手機端大按鈕座號網格與速記 (身體狀況快篩 + 學習態度快記) -->
+      <!-- 視圖 2: 手機端大按鈕座號網格與速記 (身體狀況快篩 + 學習態度快記 + 上課場地編輯) -->
       <div v-show="currentTab === 'record'" class="space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="glass-panel p-3.5 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h2 class="text-base font-bold text-white flex items-center gap-1.5">
-              <span>{{ selectedClassId }} 班 課後 10 分鐘速記</span>
-            </h2>
-            <p class="text-xs text-slate-400">點擊座號可記態度 ±4 分，右上方愛心為先天痼疾警示</p>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-base font-bold text-white flex items-center gap-1.5">
+                <span>{{ selectedClassId }} 課後 10 分鐘速記</span>
+              </h2>
+              <div class="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 font-bold">📍 場地：</span>
+                <select
+                  v-model="currentVenue"
+                  class="bg-transparent text-emerald-300 font-bold text-xs focus:outline-none cursor-pointer"
+                >
+                  <option v-for="venue in STANDARD_VENUES" :key="venue" :value="venue" class="bg-slate-800 text-white">{{ venue }}</option>
+                </select>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">點擊座號可記態度 ±4 分，右上方愛心為先天痼疾警示</p>
           </div>
           <button
             @click="quickArchiveAll"
-            class="active-press bg-emerald-700/60 hover:bg-emerald-600 text-emerald-200 text-xs font-bold px-3 py-2 rounded-lg border border-emerald-500/50 flex items-center gap-1 shadow"
+            class="active-press bg-emerald-700/60 hover:bg-emerald-600 text-emerald-200 text-xs font-bold px-3 py-2 rounded-lg border border-emerald-500/50 flex items-center gap-1 shadow whitespace-nowrap"
           >
             <span>⚡ 全班正常歸檔</span>
           </button>
@@ -206,7 +221,7 @@
               v-model="voiceNoteText"
               rows="4"
               class="w-full bg-transparent text-sm text-slate-100 focus:outline-none resize-none"
-              placeholder="口述內容將即時顯示於此，例如：「今日501班進行立定跳遠第二次測驗，整體起跳擺臂動作良好...」"
+              placeholder="口述內容將即時顯示於此，例如：「今日五丁進行立定跳遠第二次測驗，整體起跳擺臂動作良好...」"
             ></textarea>
           </div>
         </div>
@@ -231,7 +246,7 @@
     <!-- 底部固定儲存浮動列 (前台課後 10 分鐘一鍵批次同步，後台時自動隱藏) -->
     <div v-if="currentTab !== 'admin'" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 max-w-2xl mx-auto flex items-center justify-between gap-3">
       <div class="text-xs text-slate-400">
-        <span class="font-bold text-white">{{ selectedClassId }} 班速記</span>
+        <span class="font-bold text-white">{{ selectedClassId }} ({{ currentVenue }}) 速記</span>
         <span class="ml-1 text-[11px]">異動 {{ unsavedCount }} 筆</span>
       </div>
 
@@ -326,10 +341,12 @@ import NumberPadInput from './components/NumberPadInput.vue';
 import SkillExamView from './components/SkillExamView.vue';
 import AdminManageView from './components/AdminManageView.vue';
 import { apiService } from './services/api';
+import { STANDARD_VENUES } from './services/mockData';
 
 const currentTab = ref('home');
-const selectedClassId = ref('5丁');
+const selectedClassId = ref('五丁');
 const currentPeriod = ref(6);
+const currentVenue = ref('操場');
 
 const isOnline = ref(navigator.onLine);
 const isSaving = ref(false);
@@ -345,7 +362,7 @@ const toastType = ref('success');
 
 // 初始資料集合 (大庄國小 115上 體育科)
 const bootstrapData = ref({
-  classes: ['5丁', '5戊', '6甲', '6乙'],
+  classes: ['五丁', '五戊', '六甲', '六乙'],
   students: [],
   timetable: [],
   curriculum: [],
@@ -402,12 +419,15 @@ function initDefaultHealth(classId) {
   healthRecords.value = initH;
 }
 
-function handleSelectClass({ classId, period }) {
+function handleSelectClass({ classId, period, location }) {
   selectedClassId.value = classId;
   if (period) currentPeriod.value = period;
+  if (location && STANDARD_VENUES.includes(location)) {
+    currentVenue.value = location;
+  }
   initDefaultHealth(classId);
   currentTab.value = 'record';
-  showToast(`已切換至 ${classId} 班 (第 ${period || 2} 節)`, 'success');
+  showToast(`已切換至 ${classId} (第 ${period || 2} 節，${currentVenue.value})`, 'success');
 }
 
 function handleUpdateHealth({ studentId, healthStatus }) {
@@ -515,6 +535,7 @@ async function handleBatchSaveToGAS() {
       date: new Date().toLocaleDateString('sv'), // YYYY-MM-DD
       period: currentPeriod.value,
       classId: selectedClassId.value,
+      location: currentVenue.value,
       actualContent: '常規檢核、技能評量與運動常規表現',
       voiceNotes: voiceNoteText.value
     },

@@ -3,11 +3,13 @@
  * 依據「課表.pdf」、「五上體育教學進度表.doc」、「六上體育教學進度表.docx」建置
  */
 
+export const STANDARD_VENUES = ['操場', '體育館', '綜合球場'];
+
 export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 1,
     "period": 6,
-    "classId": "5丁",
+    "classId": "五丁",
     "location": "操場",
     "startTime": "14:10",
     "endTime": "14:50"
@@ -15,7 +17,7 @@ export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 1,
     "period": 7,
-    "classId": "6甲",
+    "classId": "六甲",
     "location": "操場",
     "startTime": "15:10",
     "endTime": "15:50"
@@ -23,15 +25,15 @@ export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 2,
     "period": 5,
-    "classId": "5戊",
-    "location": "籃球場/操場",
+    "classId": "五戊",
+    "location": "綜合球場",
     "startTime": "13:20",
     "endTime": "14:00"
   },
   {
     "dayOfWeek": 2,
     "period": 7,
-    "classId": "6乙",
+    "classId": "六乙",
     "location": "操場",
     "startTime": "15:10",
     "endTime": "15:50"
@@ -39,15 +41,15 @@ export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 4,
     "period": 5,
-    "classId": "6乙",
-    "location": "體育館/操場",
+    "classId": "六乙",
+    "location": "體育館",
     "startTime": "13:20",
     "endTime": "14:00"
   },
   {
     "dayOfWeek": 4,
     "period": 7,
-    "classId": "5戊",
+    "classId": "五戊",
     "location": "操場",
     "startTime": "15:10",
     "endTime": "15:50"
@@ -55,7 +57,7 @@ export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 5,
     "period": 3,
-    "classId": "5丁",
+    "classId": "五丁",
     "location": "體育館",
     "startTime": "10:30",
     "endTime": "11:10"
@@ -63,7 +65,7 @@ export const MOCK_TIMETABLE = [
   {
     "dayOfWeek": 5,
     "period": 4,
-    "classId": "6甲",
+    "classId": "六甲",
     "location": "體育館",
     "startTime": "11:20",
     "endTime": "12:00"
@@ -628,12 +630,12 @@ export const MOCK_CURRICULUM = [
   ...MOCK_CURRICULUM_GRADE6
 ];
 
-export const MOCK_CLASSES = ['5丁', '5戊', '6甲', '6乙'];
+export const MOCK_CLASSES = ['五丁', '五戊', '六甲', '六乙'];
 
 export const MOCK_STUDENTS = [
   {
-    "classId": "5丁",
-    "studentId": "5丁01",
+    "classId": "五丁",
+    "studentId": "五丁01",
     "seatNo": 1,
     "name": "張小明",
     "gender": "M",
@@ -641,8 +643,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "輕微氣喘 (運動前自備吸入劑)"
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁02",
+    "classId": "五丁",
+    "studentId": "五丁02",
     "seatNo": 2,
     "name": "吳大同",
     "gender": "M",
@@ -650,8 +652,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁03",
+    "classId": "五丁",
+    "studentId": "五丁03",
     "seatNo": 3,
     "name": "楊宇軒",
     "gender": "M",
@@ -659,8 +661,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁04",
+    "classId": "五丁",
+    "studentId": "五丁04",
     "seatNo": 4,
     "name": "謝品皓",
     "gender": "M",
@@ -668,8 +670,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "心臟二尖瓣脫垂 (避免劇烈跑步)"
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁05",
+    "classId": "五丁",
+    "studentId": "五丁05",
     "seatNo": 5,
     "name": "邱俊傑",
     "gender": "M",
@@ -677,8 +679,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁06",
+    "classId": "五丁",
+    "studentId": "五丁06",
     "seatNo": 6,
     "name": "陳承翰",
     "gender": "M",
@@ -686,8 +688,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁07",
+    "classId": "五丁",
+    "studentId": "五丁07",
     "seatNo": 7,
     "name": "張冠宇",
     "gender": "M",
@@ -695,8 +697,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁08",
+    "classId": "五丁",
+    "studentId": "五丁08",
     "seatNo": 8,
     "name": "吳子翔",
     "gender": "M",
@@ -704,8 +706,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁09",
+    "classId": "五丁",
+    "studentId": "五丁09",
     "seatNo": 9,
     "name": "楊志強",
     "gender": "M",
@@ -713,8 +715,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁10",
+    "classId": "五丁",
+    "studentId": "五丁10",
     "seatNo": 10,
     "name": "謝家瑋",
     "gender": "M",
@@ -722,8 +724,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁11",
+    "classId": "五丁",
+    "studentId": "五丁11",
     "seatNo": 11,
     "name": "邱天佑",
     "gender": "M",
@@ -731,8 +733,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁12",
+    "classId": "五丁",
+    "studentId": "五丁12",
     "seatNo": 12,
     "name": "陳政男",
     "gender": "M",
@@ -740,8 +742,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁13",
+    "classId": "五丁",
+    "studentId": "五丁13",
     "seatNo": 13,
     "name": "張依晨",
     "gender": "F",
@@ -749,8 +751,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁14",
+    "classId": "五丁",
+    "studentId": "五丁14",
     "seatNo": 14,
     "name": "吳婷萱",
     "gender": "F",
@@ -758,8 +760,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁15",
+    "classId": "五丁",
+    "studentId": "五丁15",
     "seatNo": 15,
     "name": "楊心怡",
     "gender": "F",
@@ -767,8 +769,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁16",
+    "classId": "五丁",
+    "studentId": "五丁16",
     "seatNo": 16,
     "name": "謝芷涵",
     "gender": "F",
@@ -776,8 +778,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁17",
+    "classId": "五丁",
+    "studentId": "五丁17",
     "seatNo": 17,
     "name": "邱雨潔",
     "gender": "F",
@@ -785,8 +787,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁18",
+    "classId": "五丁",
+    "studentId": "五丁18",
     "seatNo": 18,
     "name": "陳雅晴",
     "gender": "F",
@@ -794,8 +796,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁19",
+    "classId": "五丁",
+    "studentId": "五丁19",
     "seatNo": 19,
     "name": "張佳玲",
     "gender": "F",
@@ -803,8 +805,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5丁",
-    "studentId": "5丁20",
+    "classId": "五丁",
+    "studentId": "五丁20",
     "seatNo": 20,
     "name": "吳宛庭",
     "gender": "F",
@@ -812,8 +814,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊01",
+    "classId": "五戊",
+    "studentId": "五戊01",
     "seatNo": 1,
     "name": "張小明",
     "gender": "M",
@@ -821,8 +823,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "輕微氣喘 (運動前自備吸入劑)"
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊02",
+    "classId": "五戊",
+    "studentId": "五戊02",
     "seatNo": 2,
     "name": "吳大同",
     "gender": "M",
@@ -830,8 +832,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊03",
+    "classId": "五戊",
+    "studentId": "五戊03",
     "seatNo": 3,
     "name": "楊宇軒",
     "gender": "M",
@@ -839,8 +841,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊04",
+    "classId": "五戊",
+    "studentId": "五戊04",
     "seatNo": 4,
     "name": "謝品皓",
     "gender": "M",
@@ -848,8 +850,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "心臟二尖瓣脫垂 (避免劇烈跑步)"
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊05",
+    "classId": "五戊",
+    "studentId": "五戊05",
     "seatNo": 5,
     "name": "邱俊傑",
     "gender": "M",
@@ -857,8 +859,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊06",
+    "classId": "五戊",
+    "studentId": "五戊06",
     "seatNo": 6,
     "name": "陳承翰",
     "gender": "M",
@@ -866,8 +868,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊07",
+    "classId": "五戊",
+    "studentId": "五戊07",
     "seatNo": 7,
     "name": "張冠宇",
     "gender": "M",
@@ -875,8 +877,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊08",
+    "classId": "五戊",
+    "studentId": "五戊08",
     "seatNo": 8,
     "name": "吳子翔",
     "gender": "M",
@@ -884,8 +886,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊09",
+    "classId": "五戊",
+    "studentId": "五戊09",
     "seatNo": 9,
     "name": "楊志強",
     "gender": "M",
@@ -893,8 +895,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊10",
+    "classId": "五戊",
+    "studentId": "五戊10",
     "seatNo": 10,
     "name": "謝家瑋",
     "gender": "M",
@@ -902,8 +904,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊11",
+    "classId": "五戊",
+    "studentId": "五戊11",
     "seatNo": 11,
     "name": "邱天佑",
     "gender": "M",
@@ -911,8 +913,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊12",
+    "classId": "五戊",
+    "studentId": "五戊12",
     "seatNo": 12,
     "name": "陳政男",
     "gender": "M",
@@ -920,8 +922,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊13",
+    "classId": "五戊",
+    "studentId": "五戊13",
     "seatNo": 13,
     "name": "張依晨",
     "gender": "F",
@@ -929,8 +931,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊14",
+    "classId": "五戊",
+    "studentId": "五戊14",
     "seatNo": 14,
     "name": "吳婷萱",
     "gender": "F",
@@ -938,8 +940,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊15",
+    "classId": "五戊",
+    "studentId": "五戊15",
     "seatNo": 15,
     "name": "楊心怡",
     "gender": "F",
@@ -947,8 +949,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊16",
+    "classId": "五戊",
+    "studentId": "五戊16",
     "seatNo": 16,
     "name": "謝芷涵",
     "gender": "F",
@@ -956,8 +958,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊17",
+    "classId": "五戊",
+    "studentId": "五戊17",
     "seatNo": 17,
     "name": "邱雨潔",
     "gender": "F",
@@ -965,8 +967,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊18",
+    "classId": "五戊",
+    "studentId": "五戊18",
     "seatNo": 18,
     "name": "陳雅晴",
     "gender": "F",
@@ -974,8 +976,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊19",
+    "classId": "五戊",
+    "studentId": "五戊19",
     "seatNo": 19,
     "name": "張佳玲",
     "gender": "F",
@@ -983,8 +985,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "5戊",
-    "studentId": "5戊20",
+    "classId": "五戊",
+    "studentId": "五戊20",
     "seatNo": 20,
     "name": "吳宛庭",
     "gender": "F",
@@ -992,8 +994,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲01",
+    "classId": "六甲",
+    "studentId": "六甲01",
     "seatNo": 1,
     "name": "張小明",
     "gender": "M",
@@ -1001,8 +1003,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "輕微氣喘 (運動前自備吸入劑)"
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲02",
+    "classId": "六甲",
+    "studentId": "六甲02",
     "seatNo": 2,
     "name": "吳大同",
     "gender": "M",
@@ -1010,8 +1012,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲03",
+    "classId": "六甲",
+    "studentId": "六甲03",
     "seatNo": 3,
     "name": "楊宇軒",
     "gender": "M",
@@ -1019,8 +1021,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲04",
+    "classId": "六甲",
+    "studentId": "六甲04",
     "seatNo": 4,
     "name": "謝品皓",
     "gender": "M",
@@ -1028,8 +1030,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲05",
+    "classId": "六甲",
+    "studentId": "六甲05",
     "seatNo": 5,
     "name": "邱俊傑",
     "gender": "M",
@@ -1037,8 +1039,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲06",
+    "classId": "六甲",
+    "studentId": "六甲06",
     "seatNo": 6,
     "name": "陳承翰",
     "gender": "M",
@@ -1046,8 +1048,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲07",
+    "classId": "六甲",
+    "studentId": "六甲07",
     "seatNo": 7,
     "name": "張冠宇",
     "gender": "M",
@@ -1055,8 +1057,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲08",
+    "classId": "六甲",
+    "studentId": "六甲08",
     "seatNo": 8,
     "name": "吳子翔",
     "gender": "M",
@@ -1064,8 +1066,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲09",
+    "classId": "六甲",
+    "studentId": "六甲09",
     "seatNo": 9,
     "name": "楊志強",
     "gender": "M",
@@ -1073,8 +1075,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲10",
+    "classId": "六甲",
+    "studentId": "六甲10",
     "seatNo": 10,
     "name": "謝家瑋",
     "gender": "M",
@@ -1082,8 +1084,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲11",
+    "classId": "六甲",
+    "studentId": "六甲11",
     "seatNo": 11,
     "name": "邱天佑",
     "gender": "M",
@@ -1091,8 +1093,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲12",
+    "classId": "六甲",
+    "studentId": "六甲12",
     "seatNo": 12,
     "name": "陳政男",
     "gender": "M",
@@ -1100,8 +1102,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲13",
+    "classId": "六甲",
+    "studentId": "六甲13",
     "seatNo": 13,
     "name": "張依晨",
     "gender": "F",
@@ -1109,8 +1111,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲14",
+    "classId": "六甲",
+    "studentId": "六甲14",
     "seatNo": 14,
     "name": "吳婷萱",
     "gender": "F",
@@ -1118,8 +1120,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲15",
+    "classId": "六甲",
+    "studentId": "六甲15",
     "seatNo": 15,
     "name": "楊心怡",
     "gender": "F",
@@ -1127,8 +1129,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "過敏性體質 (劇烈運動後易咳嗽)"
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲16",
+    "classId": "六甲",
+    "studentId": "六甲16",
     "seatNo": 16,
     "name": "謝芷涵",
     "gender": "F",
@@ -1136,8 +1138,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲17",
+    "classId": "六甲",
+    "studentId": "六甲17",
     "seatNo": 17,
     "name": "邱雨潔",
     "gender": "F",
@@ -1145,8 +1147,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲18",
+    "classId": "六甲",
+    "studentId": "六甲18",
     "seatNo": 18,
     "name": "陳雅晴",
     "gender": "F",
@@ -1154,8 +1156,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲19",
+    "classId": "六甲",
+    "studentId": "六甲19",
     "seatNo": 19,
     "name": "張佳玲",
     "gender": "F",
@@ -1163,8 +1165,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6甲",
-    "studentId": "6甲20",
+    "classId": "六甲",
+    "studentId": "六甲20",
     "seatNo": 20,
     "name": "吳宛庭",
     "gender": "F",
@@ -1172,8 +1174,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙01",
+    "classId": "六乙",
+    "studentId": "六乙01",
     "seatNo": 1,
     "name": "張小明",
     "gender": "M",
@@ -1181,8 +1183,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "輕微氣喘 (運動前自備吸入劑)"
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙02",
+    "classId": "六乙",
+    "studentId": "六乙02",
     "seatNo": 2,
     "name": "吳大同",
     "gender": "M",
@@ -1190,8 +1192,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙03",
+    "classId": "六乙",
+    "studentId": "六乙03",
     "seatNo": 3,
     "name": "楊宇軒",
     "gender": "M",
@@ -1199,8 +1201,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙04",
+    "classId": "六乙",
+    "studentId": "六乙04",
     "seatNo": 4,
     "name": "謝品皓",
     "gender": "M",
@@ -1208,8 +1210,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙05",
+    "classId": "六乙",
+    "studentId": "六乙05",
     "seatNo": 5,
     "name": "邱俊傑",
     "gender": "M",
@@ -1217,8 +1219,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙06",
+    "classId": "六乙",
+    "studentId": "六乙06",
     "seatNo": 6,
     "name": "陳承翰",
     "gender": "M",
@@ -1226,8 +1228,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙07",
+    "classId": "六乙",
+    "studentId": "六乙07",
     "seatNo": 7,
     "name": "張冠宇",
     "gender": "M",
@@ -1235,8 +1237,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙08",
+    "classId": "六乙",
+    "studentId": "六乙08",
     "seatNo": 8,
     "name": "吳子翔",
     "gender": "M",
@@ -1244,8 +1246,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙09",
+    "classId": "六乙",
+    "studentId": "六乙09",
     "seatNo": 9,
     "name": "楊志強",
     "gender": "M",
@@ -1253,8 +1255,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙10",
+    "classId": "六乙",
+    "studentId": "六乙10",
     "seatNo": 10,
     "name": "謝家瑋",
     "gender": "M",
@@ -1262,8 +1264,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙11",
+    "classId": "六乙",
+    "studentId": "六乙11",
     "seatNo": 11,
     "name": "邱天佑",
     "gender": "M",
@@ -1271,8 +1273,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙12",
+    "classId": "六乙",
+    "studentId": "六乙12",
     "seatNo": 12,
     "name": "陳政男",
     "gender": "M",
@@ -1280,8 +1282,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙13",
+    "classId": "六乙",
+    "studentId": "六乙13",
     "seatNo": 13,
     "name": "張依晨",
     "gender": "F",
@@ -1289,8 +1291,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙14",
+    "classId": "六乙",
+    "studentId": "六乙14",
     "seatNo": 14,
     "name": "吳婷萱",
     "gender": "F",
@@ -1298,8 +1300,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙15",
+    "classId": "六乙",
+    "studentId": "六乙15",
     "seatNo": 15,
     "name": "楊心怡",
     "gender": "F",
@@ -1307,8 +1309,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": "過敏性體質 (劇烈運動後易咳嗽)"
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙16",
+    "classId": "六乙",
+    "studentId": "六乙16",
     "seatNo": 16,
     "name": "謝芷涵",
     "gender": "F",
@@ -1316,8 +1318,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙17",
+    "classId": "六乙",
+    "studentId": "六乙17",
     "seatNo": 17,
     "name": "邱雨潔",
     "gender": "F",
@@ -1325,8 +1327,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙18",
+    "classId": "六乙",
+    "studentId": "六乙18",
     "seatNo": 18,
     "name": "陳雅晴",
     "gender": "F",
@@ -1334,8 +1336,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙19",
+    "classId": "六乙",
+    "studentId": "六乙19",
     "seatNo": 19,
     "name": "張佳玲",
     "gender": "F",
@@ -1343,8 +1345,8 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   },
   {
-    "classId": "6乙",
-    "studentId": "6乙20",
+    "classId": "六乙",
+    "studentId": "六乙20",
     "seatNo": 20,
     "name": "吳宛庭",
     "gender": "F",
