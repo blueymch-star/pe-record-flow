@@ -6,16 +6,20 @@ import { NORMS_TABLE } from './norms';
 
 const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
+  API_TOKEN: 'pe_api_secret_token',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
   LOCAL_DATA: 'pe_cached_bootstrap_data_v3' // 確保載入簡化班級名稱 (五丁、五戊、六甲、六乙)
 };
+
+const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwk30K9oEXpfsC5xdDL6KtMd99-hVH6bq-I_cZNKgUO8N-wNKf0bI4KA-juOhuTqAQm/exec';
 
 export const apiService = {
   /**
    * 取得已設定的 GAS Web App URL
    */
   getGasUrl() {
-    return localStorage.getItem(STORAGE_KEYS.GAS_URL) || 'https://script.google.com/macros/s/AKfycbyaNYivDg97u79c3QsNrGqKhfoGsq5SmFNBY5RN5TmZmQoC042s39gREL7Xtbob1mM/exec';
+    return localStorage.getItem(STORAGE_KEYS.GAS_URL) || DEFAULT_GAS_URL;
   },
 
   /**
@@ -26,19 +30,47 @@ export const apiService = {
   },
 
   /**
+   * 取得已設定的 API 驗證金鑰 (Secret Token)
+   */
+  getApiToken() {
+    return localStorage.getItem(STORAGE_KEYS.API_TOKEN) || DEFAULT_API_TOKEN;
+  },
+
+  /**
+   * 儲存使用者的 API 驗證金鑰
+   */
+  setApiToken(token) {
+    localStorage.setItem(STORAGE_KEYS.API_TOKEN, (token || '').trim());
+  },
+
+  /**
+   * 清除本機所有快取與名冊（公用電腦登出使用）
+   */
+  clearAllLocalData() {
+    localStorage.removeItem(STORAGE_KEYS.LOCAL_DATA);
+    localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
+    localStorage.removeItem('pe_selected_class');
+    localStorage.removeItem('pe_current_tab');
+  },
+
+  /**
    * 取得系統初始化資料 (優先拉取 GAS，無網路或未設定時使用快取或 Mock 資料)
    */
   async getBootstrapData() {
     const gasUrl = this.getGasUrl();
+    const token = this.getApiToken();
 
     if (gasUrl) {
       try {
-        const resp = await fetch(`${gasUrl}?action=getBootstrapData`);
+        const queryUrl = `${gasUrl}?action=getBootstrapData&token=${encodeURIComponent(token)}`;
+        const resp = await fetch(queryUrl);
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.success) {
             localStorage.setItem(STORAGE_KEYS.LOCAL_DATA, JSON.stringify(data));
             return data;
+          } else if (data && data.error && data.error.includes('Unauthorized')) {
+            console.warn('GAS API 驗證金鑰不正確:', data.error);
           }
         }
       } catch (err) {
@@ -77,6 +109,7 @@ export const apiService = {
     const gasUrl = this.getGasUrl();
     const payload = {
       action: 'saveClassSession',
+      token: this.getApiToken(),
       data: sessionPayload,
       savedAt: new Date().toISOString()
     };
@@ -156,7 +189,12 @@ export const apiService = {
       const resp = await fetch(gasUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, data, timestamp: new Date().toISOString() })
+        body: JSON.stringify({ 
+          action, 
+          token: this.getApiToken(),
+          data, 
+          timestamp: new Date().toISOString() 
+        })
       });
       const result = await resp.json();
       return result;

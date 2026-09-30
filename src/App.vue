@@ -337,7 +337,7 @@
           <button @click="showSettingsModal = false" class="text-slate-400 hover:text-white p-1">✕</button>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3.5">
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">
               Google Apps Script 網頁應用程式網址 (Web App URL)：
@@ -351,6 +351,43 @@
             <p class="text-[11px] text-slate-400 mt-1">
               將部署獲得的網址貼於此處，即可即時連線 Google Sheets 資料庫。未輸入時自動啟用本機離線與測試模式。
             </p>
+          </div>
+
+          <!-- 資安防護：API 驗證金鑰 (Secret Token) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <span>🔐 API 驗證金鑰 (Secret Token)：</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">防爬蟲加固</span>
+              </label>
+              <button
+                type="button"
+                @click="showToken = !showToken"
+                class="text-[11px] text-slate-400 hover:text-slate-200"
+              >
+                {{ showToken ? '👁️ 隱藏金鑰' : '👁️‍🗨️ 顯示金鑰' }}
+              </button>
+            </div>
+            <input
+              v-model="apiTokenInput"
+              :type="showToken ? 'text' : 'password'"
+              placeholder="請輸入 API 驗證金鑰"
+              class="w-full bg-slate-800 text-slate-100 text-xs rounded-xl p-3 border border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+            />
+            <p class="text-[11px] text-slate-400 mt-1">
+              金鑰需與 Google Apps Script 雲端一致，可杜絕任意惡意爬蟲或未授權寫入。
+            </p>
+          </div>
+
+          <!-- 公用電腦隱私防護 -->
+          <div class="pt-2 border-t border-slate-800">
+            <button
+              type="button"
+              @click="handleClearLocalData"
+              class="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-bold transition hover:underline"
+            >
+              <span>🧹 公用電腦安全登出（清除本機名冊與快取）</span>
+            </button>
           </div>
         </div>
 
@@ -400,6 +437,8 @@ const isOnline = ref(navigator.onLine);
 const isSaving = ref(false);
 const showSettingsModal = ref(false);
 const gasUrlInput = ref(apiService.getGasUrl());
+const apiTokenInput = ref(apiService.getApiToken());
+const showToken = ref(false);
 
 const isAttitudeDrawerOpen = ref(false);
 const activeAttitudeStudent = ref(null);
@@ -713,8 +752,20 @@ function appendQuickPhrase(phrase) {
 
 function saveSettings() {
   apiService.setGasUrl(gasUrlInput.value);
+  apiService.setApiToken(apiTokenInput.value);
   showSettingsModal.value = false;
-  showToast('GAS 伺服器網址已更新！', 'success');
+  showToast('GAS 伺服器網址與 API 金鑰已儲存！', 'success');
+}
+
+function handleClearLocalData() {
+  if (confirm('確定要清除本機所有快取資料與班級名冊嗎？（適合於公用電腦使用完畢後清除隱私紀錄）')) {
+    apiService.clearAllLocalData();
+    showSettingsModal.value = false;
+    showToast('本機暫存與名冊已完全清除！正在重新載入...', 'success');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  }
 }
 
 function showToast(msg, type = 'success') {

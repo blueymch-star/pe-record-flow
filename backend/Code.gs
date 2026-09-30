@@ -25,6 +25,46 @@ const SHEETS = {
 };
 
 // -------------------------------------------------------------
+// 資安防護：API 金鑰驗證與公式注入消毒 (Security Layer)
+// -------------------------------------------------------------
+const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
+
+/**
+ * 取得系統目前設定的 API 驗證金鑰 (優先讀取 ScriptProperties)
+ */
+function getExpectedApiToken() {
+  const scriptProp = PropertiesService.getScriptProperties().getProperty('API_SECRET_TOKEN');
+  return scriptProp ? scriptProp.trim() : DEFAULT_API_TOKEN;
+}
+
+/**
+ * 驗證請求所附帶之 Token 是否合法
+ */
+function validateApiToken(receivedToken) {
+  const expected = getExpectedApiToken();
+  if (!receivedToken || String(receivedToken).trim() !== expected) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * 試算表公式注入防護 (Formula Injection Sanitization)
+ * 若儲存格內容開頭為 '=', '+', '-', '@' 等運算字元，強制前綴單引號轉為純文字
+ */
+function sanitizeForSheet(val) {
+  if (typeof val === 'string' && /^[=+\-@\t\r]/.test(val)) {
+    return "'" + val;
+  }
+  return val;
+}
+
+function sanitizeRow(row) {
+  if (!Array.isArray(row)) return row;
+  return row.map(sanitizeForSheet);
+}
+
+// -------------------------------------------------------------
 // 1. 初始化資料庫與工作表結構 (initDatabase)
 // -------------------------------------------------------------
 /**
@@ -32,6 +72,12 @@ const SHEETS = {
  */
 function initDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // 0. 初始化 API 驗證金鑰 (若尚未建立則賦予預設值)
+  const props = PropertiesService.getScriptProperties();
+  if (!props.getProperty('API_SECRET_TOKEN')) {
+    props.setProperty('API_SECRET_TOKEN', DEFAULT_API_TOKEN);
+  }
 
   // 1. 各工作表定義與表頭
   const schema = {
@@ -217,6 +263,14 @@ function seedInitialData(ss) {
 // -------------------------------------------------------------
 function doGet(e) {
   try {
+    const token = (e && e.parameter && e.parameter.token) ? e.parameter.token : '';
+    if (!validateApiToken(token)) {
+      return createJsonResponse({
+        success: false,
+        error: 'Unauthorized: Invalid or missing API Token (API 驗證金鑰無效或遺失)'
+      });
+    }
+
     const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'getBootstrapData';
     let responseData = {};
 
@@ -322,6 +376,14 @@ function doPost(e) {
     lock.waitLock(10000);
 
     const payload = JSON.parse(e.postData.contents);
+    const token = payload.token || '';
+    if (!validateApiToken(token)) {
+      return createJsonResponse({
+        success: false,
+        error: 'Unauthorized: Invalid or missing API Token (API 驗證金鑰無效或遺失)'
+      });
+    }
+
     const action = payload.action || 'saveClassSession';
     let result = {};
 
@@ -393,7 +455,7 @@ function handleSaveClassSession(data) {
       data.dailyLog.actualContent || '',
       data.dailyLog.voiceNotes || ''
     ];
-    dailySheet.appendRow(logRow);
+    dailySheet.appendRow(sanitizeRow(logRow));
     writtenCounts.dailyLog = 1;
   }
 
@@ -428,7 +490,7 @@ function handleSaveClassSession(data) {
 
     if (haRows.length > 0) {
       const startRow = haSheet.getLastRow() + 1;
-      haSheet.getRange(startRow, 1, haRows.length, haRows[0].length).setValues(haRows);
+      haSheet.getRange(startRow, 1, haRows.length, haRows[0].length).setValues(haRows.map(sanitizeRow));
       writtenCounts.healthAttitude = haRows.length;
     }
   }
@@ -452,7 +514,7 @@ function handleSaveClassSession(data) {
 
     if (fitnessRows.length > 0) {
       const startRow = fitnessSheet.getLastRow() + 1;
-      fitnessSheet.getRange(startRow, 1, fitnessRows.length, fitnessRows[0].length).setValues(fitnessRows);
+      fitnessSheet.getRange(startRow, 1, fitnessRows.length, fitnessRows[0].length).setValues(fitnessRows.map(sanitizeRow));
       writtenCounts.fitness = fitnessRows.length;
     }
   }
@@ -475,7 +537,7 @@ function handleSaveClassSession(data) {
 
     if (skillRows.length > 0) {
       const startRow = skillSheet.getLastRow() + 1;
-      skillSheet.getRange(startRow, 1, skillRows.length, skillRows[0].length).setValues(skillRows);
+      skillSheet.getRange(startRow, 1, skillRows.length, skillRows[0].length).setValues(skillRows.map(sanitizeRow));
       writtenCounts.skills = skillRows.length;
     }
   }
@@ -507,7 +569,7 @@ function handleBatchImportStudents(students) {
     s.MedicalNotes || s.medicalNotes || ''
   ]);
   const startRow = sheet.getLastRow() + 1;
-  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+  sheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   return { success: true, count: rows.length };
 }
 
@@ -533,7 +595,7 @@ function handleSaveStudents(students) {
       s.gender || s.Gender || 'M',
       s.medicalNotes || s.MedicalNotes || ''
     ]);
-    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   }
   return { success: true, count: students.length, message: '學生名冊已成功同步更新！' };
 }
@@ -557,7 +619,7 @@ function handleSaveTimetable(timetable) {
       t.classId || t.ClassId || '',
       t.location || t.Location || ''
     ]);
-    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   }
   return { success: true, count: timetable.length, message: '週課表已成功同步更新！' };
 }
@@ -581,7 +643,7 @@ function handleSaveCurriculum(curriculum) {
       c.suggestedContent || c.SuggestedContent || '',
       c.keyFocus || c.KeyFocus || ''
     ]);
-    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+    sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   }
   return { success: true, count: curriculum.length, message: '上課進度與課程計畫已成功同步更新！' };
 }
