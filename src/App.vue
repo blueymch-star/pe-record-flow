@@ -2,50 +2,51 @@
   <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col max-w-2xl mx-auto pb-24 shadow-2xl relative font-sans">
     
     <!-- 頂部 Header -->
-    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-slate-950 shadow-md">
+    <!-- 頂部 Header (針對手機端緊湊排版，防止按鈕文字折行) -->
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-slate-950 shadow-md flex-shrink-0 text-sm">
           ⚡
         </div>
-        <div>
-          <h1 class="font-black text-base tracking-tight leading-tight flex items-center gap-1.5">
+        <div class="min-w-0">
+          <h1 class="font-black text-sm sm:text-base tracking-tight leading-tight flex items-center gap-1.5 whitespace-nowrap">
             <span>PE Record Flow</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v4.0</span>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">v4.0</span>
           </h1>
-          <p class="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
-            <span>目前班級：<strong class="text-emerald-300">{{ selectedClassId }}</strong></span>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap overflow-hidden text-ellipsis">
+            <span>班級：<strong class="text-emerald-300">{{ selectedClassId }}</strong></span>
             <span>·</span>
-            <span>場地：<strong class="text-emerald-300">{{ currentVenue }}</strong></span>
+            <span><strong class="text-emerald-300">{{ currentVenue }}</strong></span>
             <span>·</span>
-            <span>共 {{ currentStudents.length }} 人</span>
+            <span>{{ currentStudents.length }}人</span>
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <!-- 後台管理切換按鈕 -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <!-- 後台管理切換按鈕 (設定 whitespace-nowrap 保證永遠單行) -->
         <button
           @click="currentTab = currentTab === 'admin' ? 'home' : 'admin'"
-          class="active-press px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition"
+          class="active-press px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition"
           :class="currentTab === 'admin' ? 'bg-indigo-600 text-white border-indigo-400 shadow-md' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
           title="切換後台資料編輯"
         >
           <span>{{ currentTab === 'admin' ? '📋 返回速記' : '🛠️ 後台管理' }}</span>
         </button>
 
-        <!-- 離線 / 連線狀態指示 -->
+        <!-- 離線 / 連線狀態指示 (設定 whitespace-nowrap 避免垂直換行) -->
         <span
-          class="text-[11px] font-semibold px-2 py-1 rounded-full border flex items-center gap-1"
+          class="text-[10px] sm:text-[11px] font-semibold px-2 py-1 rounded-full border flex items-center gap-1 whitespace-nowrap flex-shrink-0"
           :class="isOnline ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-amber-950/60 border-amber-500/40 text-amber-300'"
         >
-          <span class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-emerald-400' : 'bg-amber-400'"></span>
-          {{ isOnline ? '已就緒' : '離線暫存' }}
+          <span class="w-1.5 h-1.5 rounded-full" :class="isOnline ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+          <span>{{ isOnline ? '已就緒' : '離線' }}</span>
         </span>
 
         <!-- 設定 GAS URL 按鈕 -->
         <button
           @click="showSettingsModal = true"
-          class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+          class="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex-shrink-0"
           title="系統設定"
         >
           ⚙️
@@ -54,41 +55,41 @@
     </header>
 
     <!-- 主要內容區 -->
-    <main class="flex-1 p-4 space-y-5">
+    <main class="flex-1 p-3 sm:p-4 space-y-4 sm:space-y-5">
 
       <!-- 分頁導航列 (前台 5 大模式，進入後台時自動隱藏) -->
       <nav v-show="currentTab !== 'admin'" class="grid grid-cols-5 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
         <button
           @click="currentTab = 'home'"
-          class="py-2.5 rounded-lg transition text-center"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
           :class="currentTab === 'home' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           🏠 首頁
         </button>
         <button
           @click="currentTab = 'record'"
-          class="py-2.5 rounded-lg transition text-center"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
           :class="currentTab === 'record' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           📋 速記
         </button>
         <button
           @click="currentTab = 'fitness'"
-          class="py-2.5 rounded-lg transition text-center"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
           :class="currentTab === 'fitness' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           🏃 體適能
         </button>
         <button
           @click="currentTab = 'skill'"
-          class="py-2.5 rounded-lg transition text-center"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
           :class="currentTab === 'skill' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           🎯 技能
         </button>
         <button
           @click="currentTab = 'voice'"
-          class="py-2.5 rounded-lg transition text-center"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
           :class="currentTab === 'voice' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           🎙️ 語音
@@ -157,27 +158,27 @@
           </button>
         </div>
 
-        <!-- 體適能檢測即時清單 -->
+        <!-- 體適能檢測即時清單 (支援手機端單行姓名、橫向滾動與凍結首欄) -->
         <div class="glass-panel rounded-2xl border border-slate-700/80 p-3 overflow-x-auto">
-          <table class="w-full text-xs text-left">
+          <table class="w-full min-w-[480px] text-xs text-left">
             <thead>
-              <tr class="border-b border-slate-700 text-slate-400 font-bold">
-                <th class="py-2 px-1">座號</th>
-                <th class="py-2 px-2">姓名</th>
-                <th class="py-2 px-2">仰臥捲腹</th>
-                <th class="py-2 px-2">坐姿體前彎</th>
-                <th class="py-2 px-2">立定跳遠</th>
-                <th class="py-2 px-2">800m跑走</th>
+              <tr class="border-b border-slate-700 text-slate-400 font-bold whitespace-nowrap">
+                <th class="py-2.5 px-2 w-12 text-center sticky left-0 bg-slate-900 z-10">座號</th>
+                <th class="py-2.5 px-3 min-w-[76px] sticky left-12 bg-slate-900 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.5)]">姓名</th>
+                <th class="py-2.5 px-3 text-center">仰臥捲腹</th>
+                <th class="py-2.5 px-3 text-center">坐姿體前彎</th>
+                <th class="py-2.5 px-3 text-center">立定跳遠</th>
+                <th class="py-2.5 px-3 text-center">800m跑走</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800">
+            <tbody class="divide-y divide-slate-800 whitespace-nowrap">
               <tr v-for="s in currentStudents" :key="s.studentId" class="hover:bg-slate-800/40">
-                <td class="py-2 px-1 font-mono font-bold text-emerald-400">{{ s.seatNo }}</td>
-                <td class="py-2 px-2 font-bold">{{ s.name }}</td>
-                <td class="py-2 px-2">{{ getFitnessCell(s.studentId, 'CurlUps') }}</td>
-                <td class="py-2 px-2">{{ getFitnessCell(s.studentId, 'SitAndReach') }}</td>
-                <td class="py-2 px-2">{{ getFitnessCell(s.studentId, 'StandingLongJump') }}</td>
-                <td class="py-2 px-2">{{ getFitnessCell(s.studentId, 'CardioRun') }}</td>
+                <td class="py-2.5 px-2 font-mono font-bold text-emerald-400 text-center sticky left-0 bg-slate-900/95 z-10">{{ s.seatNo }}</td>
+                <td class="py-2.5 px-3 font-bold text-white whitespace-nowrap sticky left-12 bg-slate-900/95 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.5)]">{{ s.name }}</td>
+                <td class="py-2.5 px-3 text-center font-mono">{{ getFitnessCell(s.studentId, 'CurlUps') }}</td>
+                <td class="py-2.5 px-3 text-center font-mono">{{ getFitnessCell(s.studentId, 'SitAndReach') }}</td>
+                <td class="py-2.5 px-3 text-center font-mono">{{ getFitnessCell(s.studentId, 'StandingLongJump') }}</td>
+                <td class="py-2.5 px-3 text-center font-mono">{{ getFitnessCell(s.studentId, 'CardioRun') }}</td>
               </tr>
             </tbody>
           </table>
@@ -291,16 +292,16 @@
     </main>
 
     <!-- 底部固定儲存浮動列 (前台課後 10 分鐘一鍵批次同步，後台時自動隱藏) -->
-    <div v-if="currentTab !== 'admin'" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-3 max-w-2xl mx-auto flex items-center justify-between gap-3">
-      <div class="text-xs text-slate-400">
-        <span class="font-bold text-white">{{ selectedClassId }} ({{ currentVenue }}) 速記</span>
-        <span class="ml-1 text-[11px]">異動 {{ unsavedCount }} 筆</span>
+    <div v-if="currentTab !== 'admin'" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-2.5 max-w-2xl mx-auto flex items-center justify-between gap-2">
+      <div class="text-xs text-slate-400 whitespace-nowrap min-w-0 truncate">
+        <span class="font-bold text-white">{{ selectedClassId }} ({{ currentVenue }})</span>
+        <span class="ml-1 text-[11px] text-emerald-400 font-mono">異動 {{ unsavedCount }} 筆</span>
       </div>
 
       <button
         @click="handleBatchSaveToGAS"
         :disabled="isSaving"
-        class="active-press disabled:opacity-50 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2"
+        class="active-press disabled:opacity-50 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
       >
         <span v-if="isSaving">⏳ 批次寫入中...</span>
         <span v-else>💾 課後一鍵批次同步</span>

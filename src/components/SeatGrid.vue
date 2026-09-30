@@ -1,18 +1,18 @@
 <template>
   <div class="space-y-4">
     <!-- 頂部操作列：狀態圖例與快速統計 -->
-    <div class="glass-panel p-3 rounded-xl flex items-center justify-between gap-2 border border-slate-700/80">
-      <div class="flex items-center gap-3 text-xs font-medium">
+    <div class="glass-panel p-2.5 sm:p-3 rounded-xl flex items-center justify-between gap-2 border border-slate-700/80 overflow-x-auto no-scrollbar">
+      <div class="flex items-center gap-2.5 sm:gap-3 text-xs font-medium whitespace-nowrap flex-shrink-0">
         <span class="flex items-center gap-1.5 text-emerald-400">
-          <span class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+          <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
           良好 ({{ countByStatus('良好') }})
         </span>
         <span class="flex items-center gap-1.5 text-amber-400">
-          <span class="w-3 h-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
+          <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
           不適/傷 ({{ countByStatus('不適') }})
         </span>
         <span class="flex items-center gap-1.5 text-orange-400">
-          <span class="w-3 h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
+          <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
           見習 ({{ countByStatus('見習') }})
         </span>
       </div>
@@ -20,7 +20,7 @@
       <!-- 模式切換：單手點擊健康切換 VS 點擊開抽屜態度記分 -->
       <button
         @click="toggleMode"
-        class="active-press text-xs font-bold px-2.5 py-1.5 rounded-lg border flex items-center gap-1"
+        class="active-press text-xs font-bold px-2.5 py-1.5 rounded-lg border flex items-center gap-1 whitespace-nowrap flex-shrink-0"
         :class="quickToggleMode ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-700 text-slate-300 border-slate-600'"
       >
         <span>{{ quickToggleMode ? '⚡ 單擊切健康' : '📝 點擊記態度' }}</span>
@@ -56,7 +56,7 @@
           </span>
         </div>
 
-        <div class="text-sm font-bold truncate max-w-full my-0.5">
+        <div class="text-sm font-bold truncate max-w-full my-0.5 whitespace-nowrap">
           {{ student.name }}
         </div>
 

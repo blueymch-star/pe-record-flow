@@ -86,38 +86,39 @@
     </div>
 
     <!-- 學生名單快速輸入列表 (支援單擊免測、數字填寫) -->
-    <div class="glass-panel rounded-2xl border border-slate-700/80 p-3 space-y-2">
-      <div class="flex items-center justify-between text-xs text-slate-400 font-bold px-2 py-1 border-b border-slate-800">
-        <span class="w-16">座號/性別</span>
-        <span class="w-24">學生姓名</span>
-        <span class="flex-1 text-center">實測成績 ({{ examSettings[currentExamIndex].unit || '單位' }})</span>
-        <span class="w-20 text-center">免測/補測</span>
-        <span class="w-16 text-right">換算分</span>
-      </div>
+    <div class="glass-panel rounded-2xl border border-slate-700/80 p-3 space-y-2 overflow-x-auto">
+      <div class="min-w-[420px]">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-bold px-2 py-1 border-b border-slate-800 whitespace-nowrap">
+          <span class="w-16 flex-shrink-0">座號/性別</span>
+          <span class="w-24 flex-shrink-0">學生姓名</span>
+          <span class="flex-1 text-center min-w-[110px]">實測成績 ({{ examSettings[currentExamIndex].unit || '單位' }})</span>
+          <span class="w-20 text-center flex-shrink-0">免測/補測</span>
+          <span class="w-16 text-right flex-shrink-0">換算分</span>
+        </div>
 
-      <div class="divide-y divide-slate-800/60 max-h-[55vh] overflow-y-auto no-scrollbar">
-        <div
-          v-for="student in students"
-          :key="student.studentId"
-          class="flex items-center justify-between px-2 py-2 text-xs hover:bg-slate-800/50 rounded-xl transition"
-          :class="isStudentExempt(student.studentId) ? 'bg-purple-950/20' : ''"
-        >
-          <!-- 座號與性別 -->
-          <div class="w-16 flex items-center gap-1.5">
-            <span class="w-6 h-6 rounded-md bg-slate-800 text-emerald-400 font-mono font-bold flex items-center justify-center text-xs border border-slate-700">
-              {{ student.seatNo }}
-            </span>
-            <span class="text-[10px] text-slate-400">{{ student.gender === 'M' ? '男' : '女' }}</span>
-          </div>
+        <div class="divide-y divide-slate-800/60 max-h-[55vh] overflow-y-auto no-scrollbar">
+          <div
+            v-for="student in students"
+            :key="student.studentId"
+            class="flex items-center justify-between px-2 py-2 text-xs hover:bg-slate-800/50 rounded-xl transition whitespace-nowrap"
+            :class="isStudentExempt(student.studentId) ? 'bg-purple-950/20' : ''"
+          >
+            <!-- 座號與性別 -->
+            <div class="w-16 flex items-center gap-1.5 flex-shrink-0">
+              <span class="w-6 h-6 rounded-md bg-slate-800 text-emerald-400 font-mono font-bold flex items-center justify-center text-xs border border-slate-700">
+                {{ student.seatNo }}
+              </span>
+              <span class="text-[10px] text-slate-400">{{ student.gender === 'M' ? '男' : '女' }}</span>
+            </div>
 
-          <!-- 姓名與痼疾 -->
-          <div class="w-24 truncate font-bold text-slate-200 flex items-center gap-1">
-            <span>{{ student.name }}</span>
-            <span v-if="student.medicalNotes" class="text-[10px]" title="痼疾">❤️</span>
-          </div>
+            <!-- 姓名與痼疾 -->
+            <div class="w-24 min-w-[76px] whitespace-nowrap font-bold text-slate-200 flex items-center gap-1 flex-shrink-0">
+              <span>{{ student.name }}</span>
+              <span v-if="student.medicalNotes" class="text-[10px]" title="痼疾">❤️</span>
+            </div>
 
-          <!-- 原始客觀數據輸入框 -->
-          <div class="flex-1 px-2 flex justify-center">
+            <!-- 原始客觀數據輸入框 -->
+            <div class="flex-1 px-2 flex justify-center min-w-[110px]">
             <div class="relative w-28">
               <input
                 :disabled="isStudentExempt(student.studentId)"
@@ -160,6 +161,7 @@
         </div>
       </div>
     </div>
+  </div>
 
     <!-- 技能測驗大數字鍵盤連打 Modal -->
     <div

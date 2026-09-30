@@ -15,24 +15,24 @@
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
           <button
             @click="activeSubTab = 'students'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border"
+            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
             :class="activeSubTab === 'students' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
             👥 班級名冊
           </button>
           <button
             @click="activeSubTab = 'timetable'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border"
+            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
             :class="activeSubTab === 'timetable' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
             📅 週課表 (8節)
           </button>
           <button
             @click="activeSubTab = 'curriculum'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border"
+            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
             :class="activeSubTab === 'curriculum' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
           >
             📚 教學進度 (21週)
@@ -124,20 +124,20 @@
         </div>
       </div>
 
-      <!-- 學生列表表格 -->
+      <!-- 學生列表表格 (支援手機橫向滑動與姓名單行不折行) -->
       <div class="glass-panel rounded-2xl border border-slate-700/80 p-3 overflow-x-auto">
-        <table class="w-full text-xs text-left">
+        <table class="w-full min-w-[560px] text-xs text-left">
           <thead>
-            <tr class="border-b border-slate-700 text-slate-400 font-bold">
+            <tr class="border-b border-slate-700 text-slate-400 font-bold whitespace-nowrap">
               <th class="py-2.5 px-2 w-16 text-center">座號</th>
-              <th class="py-2.5 px-3">學生姓名</th>
+              <th class="py-2.5 px-3 min-w-[76px]">學生姓名</th>
               <th class="py-2.5 px-2 w-16 text-center">性別</th>
               <th class="py-2.5 px-3">學號 (主鍵)</th>
               <th class="py-2.5 px-3">先天痼疾安全備忘 (氣喘/心臟病等)</th>
               <th class="py-2.5 px-2 w-24 text-center">操作</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800">
+          <tbody class="divide-y divide-slate-800 whitespace-nowrap">
             <tr
               v-for="student in currentClassStudents"
               :key="student.studentId"
@@ -146,7 +146,7 @@
               <td class="py-2 px-2 text-center font-mono font-black text-emerald-400">
                 {{ student.seatNo }}
               </td>
-              <td class="py-2 px-3 font-bold text-white">
+              <td class="py-2 px-3 font-bold text-white whitespace-nowrap min-w-[76px]">
                 {{ student.name }}
               </td>
               <td class="py-2 px-2 text-center font-semibold" :class="student.gender === 'M' ? 'text-blue-300' : 'text-pink-300'">
