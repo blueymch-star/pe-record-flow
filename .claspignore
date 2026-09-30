@@ -1,0 +1,7 @@
+# Clasp ignore configuration
+# 僅允許推送後端 Code.gs 與 appsscript.json，其餘前端檔案全部忽略
+**/*
+!Code.gs
+!appsscript.json
+!backend/Code.gs
+!backend/appsscript.json

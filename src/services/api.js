@@ -15,7 +15,7 @@ export const apiService = {
    * 取得已設定的 GAS Web App URL
    */
   getGasUrl() {
-    return localStorage.getItem(STORAGE_KEYS.GAS_URL) || '';
+    return localStorage.getItem(STORAGE_KEYS.GAS_URL) || 'https://script.google.com/macros/s/AKfycbyaNYivDg97u79c3QsNrGqKhfoGsq5SmFNBY5RN5TmZmQoC042s39gREL7Xtbob1mM/exec';
   },
 
   /**

@@ -6,13 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gas:push": "clasp push",
+    "gas:pull": "clasp pull",
+    "gas:deploy": "clasp create-deployment",
+    "gas:status": "clasp show-file-status",
+    "gas:open": "clasp open-script",
+    "gas:sheet": "clasp open-container"
   },
   "dependencies": {
-    "vue": "^3.5.13",
-    "lucide-vue-next": "^0.475.0"
+    "lucide-vue-next": "^0.475.0",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@google/clasp": "^3.4.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",

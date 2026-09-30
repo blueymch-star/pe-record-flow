@@ -25,11 +25,12 @@ dist-ssr
 
 # Vercel
 .vercel
+patch-os.cjs
+
+# Clasp auth
+.clasprc.json
 
 # Environment variables
 .env
 .env.*
 !.env.example
-
-.vercel
-patch-os.cjs
