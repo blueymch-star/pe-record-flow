@@ -202,14 +202,18 @@ export const apiService = {
   },
 
   /**
-   * 清除本機所有快取與名冊（公用電腦登出使用）
+   * 清除本機所有快取與名冊（公用電腦登出使用，徹底清除所有 pe_ 前綴紀錄）
    */
   clearAllLocalData() {
-    localStorage.removeItem(STORAGE_KEYS.LOCAL_DATA);
-    localStorage.removeItem('pe_cached_bootstrap_data_v3');
-    localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
-    localStorage.removeItem('pe_selected_class');
-    localStorage.removeItem('pe_current_tab');
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('pe_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      console.warn('清除本機儲存失敗:', e);
+    }
   },
 
   /**
