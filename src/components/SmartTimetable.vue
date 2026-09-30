@@ -224,8 +224,9 @@ function computeCurrentWeekNumber() {
 
   if (props.curriculum && props.curriculum.length > 0) {
     for (const item of props.curriculum) {
-      if (!item.dateRange) continue;
-      const parts = item.dateRange.split('~');
+      const range = item.dateRange || item.DateRange;
+      if (!range) continue;
+      const parts = range.split('~');
       if (parts.length === 2) {
         const [startM, startD] = parts[0].trim().split('.').map(Number);
         const [endM, endD] = parts[1].trim().split('.').map(Number);
@@ -235,7 +236,7 @@ function computeCurrentWeekNumber() {
           const startVal = (startM < 7 ? startM + 12 : startM) * 100 + startD;
           const endVal = (endM < 7 ? endM + 12 : endM) * 100 + endD;
           if (currentVal >= startVal && currentVal <= endVal) {
-            return Number(item.weekNo);
+            return Number(item.weekNo || item.WeekNo);
           }
         }
       }
@@ -310,26 +311,43 @@ const recommendedLesson = computed(() => {
 // 當週教學計畫 (自動比對年級與週次)
 const activeCurriculum = computed(() => {
   const found = props.curriculum.find(
-    c => Number(c.weekNo) === currentWeek.value && (c.grade ? Number(c.grade) === curriculumGrade.value : true)
+    c => Number(c.weekNo || c.WeekNo) === currentWeek.value && (c.grade || c.Grade ? Number(c.grade || c.Grade) === curriculumGrade.value : true)
   );
-  if (found) return found;
+  if (found) {
+    return {
+      unitTitle: found.unitTitle || found.UnitTitle || '',
+      suggestedContent: found.suggestedContent || found.SuggestedContent || '',
+      keyFocus: found.keyFocus || found.KeyFocus || '',
+      venue: found.venue || found.Venue || '',
+      schoolEvent: found.schoolEvent || found.SchoolEvent || '',
+      resource: found.resource || found.Resource || '',
+      evalMethod: found.evalMethod || found.EvalMethod || ''
+    };
+  }
 
   return {
     unitTitle: curriculumGrade.value === 5 ? '田徑 (跑姿、起跑教學)' : '羽球 (正手發球)',
     suggestedContent: curriculumGrade.value === 5 ? '跑姿起跑教學與角錐練習' : '正手發球動作要領練習',
     keyFocus: '場地: 體育館',
     venue: '體育館',
+    schoolEvent: '',
+    resource: '角錐、球具',
     evalMethod: '技能操作70% 學習態度20% 體育常識10%'
   };
 });
 
 function getWeekDate(w) {
-  const found = props.curriculum.find(c => Number(c.weekNo) === w);
-  return found?.dateRange || `第${w}週`;
+  const found = props.curriculum.find(
+    c => Number(c.weekNo || c.WeekNo) === w && (c.grade || c.Grade ? Number(c.grade || c.Grade) === curriculumGrade.value : true)
+  );
+  return (found?.dateRange || found?.DateRange) || `第${w}週`;
 }
 
 function getLesson(day, period) {
-  return props.timetable.find(t => Number(t.dayOfWeek) === Number(day) && Number(t.period) === Number(period));
+  return props.timetable.find(
+    t => Number(t.dayOfWeek !== undefined ? t.dayOfWeek : t.DayOfWeek) === Number(day) && 
+         Number(t.period !== undefined ? t.period : t.Period) === Number(period)
+  );
 }
 
 function getTimetableCellClass(day, period) {

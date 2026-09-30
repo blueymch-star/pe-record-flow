@@ -585,18 +585,25 @@ function handleSaveStudents(students) {
   }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.STUDENTS);
-  // 清除除了第 1 列表頭外的舊資料
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-  }
+  
+  // 重設第 1 列表頭標準樣式
+  const headers = ['ClassId', 'StudentId', 'SeatNo', 'Name', 'Gender', 'MedicalNotes'];
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, headers.length)
+       .setValues([headers])
+       .setBackground('#1E293B')
+       .setFontColor('#FFFFFF')
+       .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
   if (students.length > 0) {
     const rows = students.map(s => [
       s.classId || s.ClassId || '',
       s.studentId || s.StudentId || '',
-      Number(s.seatNo || s.SeatNo || 0),
+      Number(s.seatNo !== undefined ? s.seatNo : (s.SeatNo || 0)),
       s.name || s.Name || '',
       s.gender || s.Gender || 'M',
-      s.medicalNotes || s.MedicalNotes || ''
+      s.medicalNotes !== undefined ? s.medicalNotes : (s.MedicalNotes || '')
     ]);
     sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   }
@@ -612,13 +619,20 @@ function handleSaveTimetable(timetable) {
   }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.TIMETABLE);
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-  }
+
+  const headers = ['DayOfWeek', 'Period', 'ClassId', 'Location'];
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, headers.length)
+       .setValues([headers])
+       .setBackground('#1E293B')
+       .setFontColor('#FFFFFF')
+       .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
   if (timetable.length > 0) {
     const rows = timetable.map(t => [
-      Number(t.dayOfWeek || t.DayOfWeek || 1),
-      Number(t.period || t.Period || 1),
+      Number(t.dayOfWeek !== undefined ? t.dayOfWeek : (t.DayOfWeek || 1)),
+      Number(t.period !== undefined ? t.period : (t.Period || 1)),
       t.classId || t.ClassId || '',
       t.location || t.Location || ''
     ]);
@@ -636,13 +650,23 @@ function handleSaveCurriculum(curriculum) {
   }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.CURRICULUM);
-  if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).clearContent();
-  }
+  
+  // 強制重設第 1 列標準 10 欄表頭 (Grade, WeekNo, DateRange, SchoolEvent, Venue, UnitTitle, SuggestedContent, KeyFocus, Resource, EvalMethod)
+  const headers = [
+    'Grade', 'WeekNo', 'DateRange', 'SchoolEvent', 'Venue', 'UnitTitle', 'SuggestedContent', 'KeyFocus', 'Resource', 'EvalMethod'
+  ];
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, headers.length)
+       .setValues([headers])
+       .setBackground('#1E293B')
+       .setFontColor('#FFFFFF')
+       .setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
   if (curriculum.length > 0) {
     const rows = curriculum.map(c => [
-      Number(c.grade || c.Grade || 5),
-      Number(c.weekNo || c.WeekNo || 1),
+      Number(c.grade !== undefined ? c.grade : (c.Grade || 5)),
+      Number(c.weekNo !== undefined ? c.weekNo : (c.WeekNo || 1)),
       c.dateRange || c.DateRange || '',
       c.schoolEvent || c.SchoolEvent || '',
       c.venue || c.Venue || '',

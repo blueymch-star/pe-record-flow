@@ -8,11 +8,11 @@ const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
   API_TOKEN: 'pe_api_secret_token',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
-  LOCAL_DATA: 'pe_cached_bootstrap_data_v5' // 升級 v5 快取，確保雙向大小寫相容並即時顯示學生姓名與座號
+  LOCAL_DATA: 'pe_cached_bootstrap_data_v6' // 升級 v6 快取，強制載入 Google 試算表校正後的 42 週課程進度
 };
 
 const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbx4vuh0f8Uc7lOLLy13bRIhF0saOThDuPqKF2c8TSAd0CJRpYH-VAlZ331Yw0wjz1zO/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxJghd5GpxST6PLDvmR1KSluKitKqVMa1ONeoGFd5YuIQBvw30kmPIypDRz2N81umR7/exec';
 
 /**
  * 欄位大小寫雙向容錯標準化函式 (相容 Google 試算表 PascalCase 與 Vue camelCase)
@@ -127,9 +127,9 @@ export const apiService = {
    */
   getGasUrl() {
     const stored = localStorage.getItem(STORAGE_KEYS.GAS_URL);
-    // 自動修復：若手機/電腦存有舊版 deployment ID，自動切換至最新 @5 部署網址
+    // 自動修復：若手機/電腦存有舊版 deployment ID，自動切換至最新 @6 部署網址
     if (stored && stored !== DEFAULT_GAS_URL) {
-      if (!stored.includes('AKfycbx4vuh0f8Uc7lOLLy13bRIhF0saOThDuPqKF2c8TSAd0CJRpYH-VAlZ331Yw0wjz1zO')) {
+      if (!stored.includes('AKfycbxJghd5GpxST6PLDvmR1KSluKitKqVMa1ONeoGFd5YuIQBvw30kmPIypDRz2N81umR7')) {
         localStorage.setItem(STORAGE_KEYS.GAS_URL, DEFAULT_GAS_URL);
         return DEFAULT_GAS_URL;
       }
