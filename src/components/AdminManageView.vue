@@ -68,25 +68,56 @@
           </button>
         </div>
 
-        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+          <!-- 隱藏原生檔案選擇器 -->
+          <input
+            type="file"
+            ref="fileInputRef"
+            accept=".csv, .txt, .tsv"
+            @change="handleFileUpload"
+            class="hidden"
+          />
+
+          <!-- 1. 下載範本 -->
+          <button
+            @click="downloadStudentTemplate"
+            class="active-press px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 text-xs font-bold flex items-center gap-1.5"
+            title="下載可由 Excel 編輯的班級名冊 CSV 範本"
+          >
+            <span>📥 下載名冊範本</span>
+          </button>
+
+          <!-- 2. 批次上傳檔案 -->
+          <button
+            @click="triggerFileInput"
+            class="active-press px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 text-xs font-bold flex items-center gap-1.5"
+            title="上傳 CSV 或文字檔批次匯入名冊"
+          >
+            <span>📤 批次上傳檔案</span>
+          </button>
+
+          <!-- 3. 批次貼上匯入 -->
           <button
             @click="showBatchImportModal = true"
-            class="active-press px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5"
+            class="active-press px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5"
+            title="從 Excel 複製多行直接貼上"
           >
-            <span>📋 批次貼上匯入</span>
+            <span>📋 貼上匯入</span>
           </button>
 
+          <!-- 4. 新增單筆學生 -->
           <button
             @click="openAddStudentModal"
-            class="active-press px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 shadow"
+            class="active-press px-2.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 shadow"
           >
-            <span>➕ 新增學生 (轉學生)</span>
+            <span>➕ 新增學生</span>
           </button>
 
+          <!-- 5. 儲存名冊 -->
           <button
             @click="saveStudentsData"
             :disabled="isSaving"
-            class="active-press disabled:opacity-50 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black flex items-center gap-1.5 shadow-lg"
+            class="active-press disabled:opacity-50 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-black flex items-center gap-1.5 shadow-lg"
           >
             <span>💾 儲存名冊</span>
           </button>
@@ -496,6 +527,83 @@
     </div>
 
     <!-- ========================================================================= -->
+    <!-- 彈窗：檔案批次上傳預覽確認 Modal -->
+    <!-- ========================================================================= -->
+    <div
+      v-if="showUploadPreviewModal"
+      class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 max-w-lg w-full shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="font-black text-sm text-white flex items-center gap-1.5">
+              <span>📤 檔案匯入確認</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              來源檔案：<span class="text-teal-300 font-mono">{{ uploadedFileName }}</span>
+            </p>
+          </div>
+          <button @click="showUploadPreviewModal = false" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="bg-slate-850 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-300">匯入目標班級：<strong class="text-emerald-400 text-sm">{{ selectedClass }}</strong></span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 font-bold">
+              共解析出 {{ uploadPreviewList.length }} 筆
+            </span>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 mb-1 flex items-center justify-between">
+              <span>名冊預覽 (前 10 筆)：</span>
+              <span class="text-[10px] text-slate-500">學號將自動帶入【{{ selectedClass }} + 座號】</span>
+            </div>
+            <div class="max-h-56 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/70 p-1">
+              <table class="w-full text-xs text-left">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 text-[11px]">
+                    <th class="py-1 px-2 text-center w-12">座號</th>
+                    <th class="py-1 px-2">姓名</th>
+                    <th class="py-1 px-2 text-center w-12">性別</th>
+                    <th class="py-1 px-2">先天痼疾安全備忘</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
+                  <tr v-for="std in uploadPreviewList.slice(0, 10)" :key="std.seatNo">
+                    <td class="py-1 px-2 text-center text-emerald-400 font-bold">{{ std.seatNo }}</td>
+                    <td class="py-1 px-2 font-sans font-bold text-white">{{ std.name }}</td>
+                    <td class="py-1 px-2 text-center" :class="std.gender === 'M' ? 'text-blue-300' : 'text-pink-300'">
+                      {{ std.gender === 'M' ? '男' : '女' }}
+                    </td>
+                    <td class="py-1 px-2 font-sans text-slate-400 truncate max-w-[180px]">
+                      {{ std.medicalNotes || '-' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-if="uploadPreviewList.length > 10" class="text-[10px] text-slate-500 text-center mt-1">
+              ... 尚有 {{ uploadPreviewList.length - 10 }} 筆資料未列出 ...
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-800">
+          <button @click="showUploadPreviewModal = false" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400">
+            取消
+          </button>
+          <button
+            @click="confirmUploadImport"
+            class="px-4 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow flex items-center gap-1.5 active-press"
+          >
+            <span>✅ 確認匯入此名冊</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
     <!-- 彈窗：編輯排課節次 Modal -->
     <!-- ========================================================================= -->
     <div
@@ -728,43 +836,211 @@ function confirmAddClass() {
   showAddClassModal.value = false;
 }
 
-// 批次匯入
+// -------------------------------------------------------------
+// 1-B. 範本下載與批次檔案上傳功能
+// -------------------------------------------------------------
+const fileInputRef = ref(null);
+const showUploadPreviewModal = ref(false);
+const uploadedFileName = ref('');
+const uploadPreviewList = ref([]);
+
+function triggerFileInput() {
+  if (fileInputRef.value) {
+    fileInputRef.value.value = '';
+    fileInputRef.value.click();
+  }
+}
+
+function downloadStudentTemplate() {
+  const headers = ['座號', '學生姓名', '性別(男/女)', '先天痼疾安全備忘(選填)'];
+  const sampleRows = [
+    ['1', '陳小明', '男', '輕微氣喘 (運動前自備吸入劑)'],
+    ['2', '林大同', '男', ''],
+    ['3', '張宇軒', '男', ''],
+    ['4', '王品皓', '男', '心臟二尖瓣脫垂 (避免劇烈跑步)'],
+    ['13', '黃婷萱', '女', '過敏性體質'],
+    ['14', '林依晨', '女', '']
+  ];
+
+  // 加入 UTF-8 BOM (\uFEFF) 確保 Excel 雙擊開啟不亂碼
+  const csvContent = '\uFEFF' + [
+    headers.join(','),
+    ...sampleRows.map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${selectedClass.value}_班級名冊範本.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  emit('toast', `已下載【${selectedClass.value}】名冊 CSV 範本，可用 Excel 編輯填寫！`, 'success');
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  uploadedFileName.value = file.name;
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result;
+      const parsed = parseStudentContent(text);
+      if (parsed.length === 0) {
+        emit('toast', '未能解析出有效學生資料，請確認檔案格式或有無標題列', 'error');
+        return;
+      }
+      uploadPreviewList.value = parsed;
+      showUploadPreviewModal.value = true;
+    } catch (err) {
+      console.error(err);
+      emit('toast', '讀取檔案發生異常，請確認檔案編碼格式', 'error');
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function parseStudentContent(text) {
+  if (!text) return [];
+  // 移除 BOM
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const list = [];
+  let autoSeat = 1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // 跳過標題列
+    if (i === 0 && (line.includes('座號') || line.includes('姓名') || line.toLowerCase().includes('seat') || line.toLowerCase().includes('name'))) {
+      continue;
+    }
+
+    let cols = [];
+    if (line.includes('\t')) {
+      cols = line.split('\t');
+    } else if (line.includes(',')) {
+      cols = parseCsvLine(line);
+    } else {
+      cols = line.split(/\s+/);
+    }
+
+    cols = cols.map(c => (c || '').trim().replace(/^"|"$/g, ''));
+    if (cols.length >= 2) {
+      const seat = parseInt(cols[0], 10) || autoSeat;
+      const name = cols[1];
+      const gender = (cols[2] === '女' || cols[2] === 'F' || cols[2] === 'f') ? 'F' : 'M';
+      const med = cols.slice(3).join(' ') || '';
+
+      if (name) {
+        list.push({
+          seatNo: seat,
+          name,
+          gender,
+          medicalNotes: med
+        });
+        autoSeat = Math.max(autoSeat, seat) + 1;
+      }
+    }
+  }
+
+  return list.sort((a, b) => a.seatNo - b.seatNo);
+}
+
+function confirmUploadImport() {
+  if (uploadPreviewList.value.length === 0) return;
+
+  const targetClass = selectedClass.value;
+  const isGrade5 = targetClass.startsWith('5') || targetClass.startsWith('五');
+  const count = uploadPreviewList.value.length;
+
+  uploadPreviewList.value.forEach(item => {
+    const seat = item.seatNo;
+    const stdId = `${targetClass}${String(seat).padStart(2, '0')}`;
+    localStudents.value = localStudents.value.filter(
+      s => !(String(s.classId) === String(targetClass) && Number(s.seatNo) === seat)
+    );
+
+    localStudents.value.push({
+      classId: targetClass,
+      studentId: stdId,
+      seatNo: seat,
+      name: item.name,
+      gender: item.gender,
+      age: isGrade5 ? 11 : 12,
+      medicalNotes: item.medicalNotes || ''
+    });
+  });
+
+  showUploadPreviewModal.value = false;
+  uploadPreviewList.value = [];
+  emit('toast', `🎉 成功將 ${count} 位學生資料匯入至【${targetClass}】！請點擊「💾 儲存名冊」！`, 'success');
+}
+
+// 批次貼上匯入
 const showBatchImportModal = ref(false);
 const batchImportText = ref('');
 function confirmBatchImport() {
-  const lines = batchImportText.value.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length === 0) return;
+  const parsed = parseStudentContent(batchImportText.value);
+  if (parsed.length === 0) {
+    emit('toast', '未輸入有效學生文字資料，請確認格式', 'error');
+    return;
+  }
 
-  let addedCount = 0;
-  lines.forEach((line) => {
-    const parts = line.split(/[\t\s]+/);
-    if (parts.length >= 2) {
-      const seat = parseInt(parts[0], 10) || (addedCount + 1);
-      const name = parts[1];
-      const gender = (parts[2] === '女' || parts[2] === 'F') ? 'F' : 'M';
-      const med = parts.slice(3).join(' ') || '';
+  const targetClass = selectedClass.value;
+  const isGrade5 = targetClass.startsWith('5') || targetClass.startsWith('五');
+  const addedCount = parsed.length;
 
-      const stdId = `${selectedClass.value}${String(seat).padStart(2, '0')}`;
-      localStudents.value = localStudents.value.filter(
-        s => !(String(s.classId) === String(selectedClass.value) && Number(s.seatNo) === seat)
-      );
+  parsed.forEach((item) => {
+    const seat = item.seatNo;
+    const stdId = `${targetClass}${String(seat).padStart(2, '0')}`;
+    localStudents.value = localStudents.value.filter(
+      s => !(String(s.classId) === String(targetClass) && Number(s.seatNo) === seat)
+    );
 
-      localStudents.value.push({
-        classId: selectedClass.value,
-        studentId: stdId,
-        seatNo: seat,
-        name,
-        gender,
-        age: (selectedClass.value.startsWith('5') || selectedClass.value.startsWith('五')) ? 11 : 12,
-        medicalNotes: med
-      });
-      addedCount++;
-    }
+    localStudents.value.push({
+      classId: targetClass,
+      studentId: stdId,
+      seatNo: seat,
+      name: item.name,
+      gender: item.gender,
+      age: isGrade5 ? 11 : 12,
+      medicalNotes: item.medicalNotes || ''
+    });
   });
 
   batchImportText.value = '';
   showBatchImportModal.value = false;
-  emit('toast', `成功匯入 ${addedCount} 筆學生至 ${selectedClass.value}！`, 'success');
+  emit('toast', `成功貼上匯入 ${addedCount} 筆學生至 ${targetClass}！請記得點擊「💾 儲存名冊」！`, 'success');
 }
 
 async function saveStudentsData() {

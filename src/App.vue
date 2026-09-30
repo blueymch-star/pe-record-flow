@@ -215,14 +215,61 @@
           </div>
 
           <!-- 辨識結果顯示區 -->
-          <div class="text-left bg-slate-900/90 rounded-xl p-3 border border-slate-700">
-            <label class="block text-xs font-bold text-slate-400 mb-1">即時口述辨識內容：</label>
+          <div class="text-left bg-slate-900/90 rounded-2xl p-4 border border-slate-700/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <span>📝 即時口述速記內容：</span>
+                <span v-if="isRecording" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-950/80 text-red-300 text-[10px] font-bold border border-red-700/60 animate-pulse">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> 錄音中
+                </span>
+              </label>
+              <div class="flex items-center gap-1.5">
+                <button
+                  v-if="voiceNoteText"
+                  @click="copyVoiceNote"
+                  class="active-press px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700"
+                  title="複製文字"
+                >
+                  📋 複製
+                </button>
+                <button
+                  v-if="voiceNoteText || interimVoiceText"
+                  @click="clearVoiceNote"
+                  class="active-press px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-950/50 text-red-400 text-xs font-bold border border-slate-700"
+                  title="清空文字"
+                >
+                  🧹 清空
+                </button>
+              </div>
+            </div>
+
+            <!-- 即時語音暫態回饋 (防止字詞重複堆疊) -->
+            <div v-if="interimVoiceText" class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
+              <span class="animate-pulse text-sm">🎙️</span>
+              <span class="font-medium italic">正在辨識：「{{ interimVoiceText }}」...</span>
+            </div>
+
             <textarea
               v-model="voiceNoteText"
               rows="4"
-              class="w-full bg-transparent text-sm text-slate-100 focus:outline-none resize-none"
-              placeholder="口述內容將即時顯示於此，例如：「今日五丁進行立定跳遠第二次測驗，整體起跳擺臂動作良好...」"
+              class="w-full bg-slate-950/60 text-sm text-slate-100 p-3 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none font-medium leading-relaxed"
+              placeholder="口述內容將即時顯示於此，例如：「今日五丁進行田徑彎道加速跑，全班活動常規良好，無運動傷害...」"
             ></textarea>
+
+            <!-- 常用速記快速短語推薦點擊填入 -->
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 mb-1.5">⚡ 點擊快速插入常用語句：</div>
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  v-for="phrase in ['全班運動常規良好', '完成分組技能測驗', '下課確實清點器材', '1人身體不適在旁見習', '操場跑道濕滑改體育館']"
+                  :key="phrase"
+                  @click="appendQuickPhrase(phrase)"
+                  class="active-press px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs transition"
+                >
+                  + {{ phrase }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -558,49 +605,109 @@ async function handleBatchSaveToGAS() {
   }
 }
 
-// 語音識別 (Web Speech API)
+// 語音識別 (Web Speech API) - 修正重疊字詞重複堆疊問題
 let recognition = null;
+const interimVoiceText = ref('');
+
 function toggleSpeechRecognition() {
   if (isRecording.value) {
-    if (recognition) recognition.stop();
+    if (recognition) {
+      try {
+        recognition.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (interimVoiceText.value.trim()) {
+      voiceNoteText.value = (voiceNoteText.value.trim() ? voiceNoteText.value.trim() + ' ' : '') + interimVoiceText.value.trim();
+      interimVoiceText.value = '';
+    }
     isRecording.value = false;
     return;
   }
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    showToast('此瀏覽器不支援 Web Speech API，請直接輸入文字備忘', 'error');
+    showToast('此瀏覽器不支援 Web Speech API，請使用 Chrome 或直接打字輸入', 'error');
     return;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.lang = 'zh-TW';
-  recognition.continuous = true;
-  recognition.interimResults = true;
+  try {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'zh-TW';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
 
-  recognition.onstart = () => {
-    isRecording.value = true;
-    showToast('語音辨識中，請開始口述...', 'success');
-  };
+    recognition.onstart = () => {
+      isRecording.value = true;
+      interimVoiceText.value = '';
+      showToast('🎤 麥克風已啟動，請開始口述課堂速記...', 'success');
+    };
 
-  recognition.onresult = (event) => {
-    let transcript = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
-    }
-    voiceNoteText.value = (voiceNoteText.value ? voiceNoteText.value + ' ' : '') + transcript;
-  };
+    recognition.onresult = (event) => {
+      let finalChunk = '';
+      let interimChunk = '';
 
-  recognition.onerror = (e) => {
-    console.warn('Speech recognition error:', e);
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        const text = res[0]?.transcript || '';
+        if (res.isFinal) {
+          finalChunk += text;
+        } else {
+          interimChunk += text;
+        }
+      }
+
+      if (finalChunk.trim()) {
+        const cleaned = finalChunk.trim();
+        voiceNoteText.value = (voiceNoteText.value.trim() ? voiceNoteText.value.trim() + ' ' : '') + cleaned;
+      }
+      interimVoiceText.value = interimChunk.trim();
+    };
+
+    recognition.onerror = (e) => {
+      console.warn('Speech recognition error:', e);
+      if (e.error === 'not-allowed') {
+        showToast('無法存取麥克風，請檢查瀏覽器麥克風權限', 'error');
+      } else if (e.error !== 'no-speech') {
+        showToast(`語音辨識提示: ${e.error}`, 'error');
+      }
+      isRecording.value = false;
+      interimVoiceText.value = '';
+    };
+
+    recognition.onend = () => {
+      if (interimVoiceText.value.trim()) {
+        voiceNoteText.value = (voiceNoteText.value.trim() ? voiceNoteText.value.trim() + ' ' : '') + interimVoiceText.value.trim();
+        interimVoiceText.value = '';
+      }
+      isRecording.value = false;
+    };
+
+    recognition.start();
+  } catch (err) {
+    console.error('Failed to start speech recognition:', err);
+    showToast('啟動語音辨識失敗，請檢查麥克風權限', 'error');
     isRecording.value = false;
-  };
+  }
+}
 
-  recognition.onend = () => {
-    isRecording.value = false;
-  };
+function clearVoiceNote() {
+  voiceNoteText.value = '';
+  interimVoiceText.value = '';
+  showToast('已清空語音速記內容', 'success');
+}
 
-  recognition.start();
+function copyVoiceNote() {
+  if (!voiceNoteText.value) return;
+  navigator.clipboard.writeText(voiceNoteText.value)
+    .then(() => showToast('已複製速記內容至剪貼簿！', 'success'))
+    .catch(() => showToast('複製失敗', 'error'));
+}
+
+function appendQuickPhrase(phrase) {
+  voiceNoteText.value = (voiceNoteText.value.trim() ? voiceNoteText.value.trim() + ' ' : '') + phrase;
 }
 
 function saveSettings() {

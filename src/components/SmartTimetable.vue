@@ -99,17 +99,27 @@
           </div>
         </div>
 
-        <!-- 週次下拉選單 (第 1 ~ 21 週) -->
-        <div class="flex items-center gap-1.5 text-xs text-slate-400">
-          <span>週次：</span>
-          <select
-            v-model.number="currentWeek"
-            class="bg-slate-800 text-emerald-300 font-bold rounded-lg px-2.5 py-1 border border-slate-700 focus:outline-none"
+        <!-- 週次下拉選單 (第 1 ~ 21 週，自動對齊當前週次) -->
+        <div class="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+          <div class="flex items-center gap-1.5">
+            <span>週次：</span>
+            <select
+              v-model.number="currentWeek"
+              class="bg-slate-800 text-emerald-300 font-bold rounded-lg px-2.5 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option v-for="w in 21" :key="w" :value="w">
+                第 {{ w }} 週 ({{ getWeekDate(w) }}){{ w === realCurrentWeek ? ' ★本週' : '' }}
+              </option>
+            </select>
+          </div>
+          <button
+            v-if="currentWeek !== realCurrentWeek"
+            @click="currentWeek = realCurrentWeek"
+            class="px-2 py-0.5 rounded-md bg-emerald-900/60 text-emerald-300 border border-emerald-600/50 hover:bg-emerald-800 text-[11px] font-bold active-press transition"
+            title="快速跳回目前日期所在週次"
           >
-            <option v-for="w in 21" :key="w" :value="w">
-              第 {{ w }} 週 ({{ getWeekDate(w) }})
-            </option>
-          </select>
+            ↩️ 回本週 (第{{ realCurrentWeek }}週)
+          </button>
         </div>
       </div>
 
@@ -130,9 +140,9 @@
         </p>
       </div>
 
-      <div class="text-[11px] text-emerald-300/90 bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-900/50 flex items-center justify-between">
-        <span>🎯 <span class="font-bold">評量方式：</span>{{ activeCurriculum.evalMethod || '技能操作70% 學習態度20% 體育常識10%' }}</span>
-        <span v-if="activeCurriculum.resource" class="text-slate-400">器材：{{ activeCurriculum.resource }}</span>
+      <!-- 教學器材資訊 (已刪除評量方式) -->
+      <div v-if="activeCurriculum.resource" class="text-[11px] text-slate-300 bg-slate-850/80 p-2 rounded-lg border border-slate-700/60 flex items-center gap-2">
+        <span>📦 <strong class="text-emerald-400">教學器材：</strong>{{ activeCurriculum.resource }}</span>
       </div>
     </div>
 
@@ -184,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
   timetable: {
@@ -204,8 +214,53 @@ const props = defineProps({
 const emit = defineEmits(['select-class']);
 
 const manualClassId = ref('');
-const currentWeek = ref(1);
 const curriculumGrade = ref(5);
+
+// 自動推算目前日期對應的週次 (1~21 週)
+function computeCurrentWeekNumber() {
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  if (props.curriculum && props.curriculum.length > 0) {
+    for (const item of props.curriculum) {
+      if (!item.dateRange) continue;
+      const parts = item.dateRange.split('~');
+      if (parts.length === 2) {
+        const [startM, startD] = parts[0].trim().split('.').map(Number);
+        const [endM, endD] = parts[1].trim().split('.').map(Number);
+        if (startM && startD && endM && endD) {
+          // 將月份換算成學期序號（8~12月為 8~12，1~2月為 13~14）
+          const currentVal = (currentMonth < 7 ? currentMonth + 12 : currentMonth) * 100 + currentDay;
+          const startVal = (startM < 7 ? startM + 12 : startM) * 100 + startD;
+          const endVal = (endM < 7 ? endM + 12 : endM) * 100 + endD;
+          if (currentVal >= startVal && currentVal <= endVal) {
+            return Number(item.weekNo);
+          }
+        }
+      }
+    }
+  }
+
+  // 備用以 2026-08-31 開學週作為基準推算
+  const semesterStart = new Date(2026, 7, 31);
+  const diffTime = today.getTime() - semesterStart.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 1;
+  const week = Math.floor(diffDays / 7) + 1;
+  return Math.min(Math.max(week, 1), 21);
+}
+
+const realCurrentWeek = computed(() => computeCurrentWeekNumber());
+const currentWeek = ref(computeCurrentWeekNumber());
+
+watch(
+  () => props.curriculum,
+  () => {
+    currentWeek.value = computeCurrentWeekNumber();
+  },
+  { deep: true }
+);
 
 const periodTimeLabels = {
   1: '08:40',
