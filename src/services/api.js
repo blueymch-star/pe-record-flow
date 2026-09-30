@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwk30K9oEXpfsC5xdDL6KtMd99-hVH6bq-I_cZNKgUO8N-wNKf0bI4KA-juOhuTqAQm/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxCF3u8giAvvq1ER2r7soDGKWAv47BKuMdAm7rDUDjEYI4oR2979gHPBdDCiMxrawdA/exec';
 
 export const apiService = {
   /**
@@ -41,6 +41,41 @@ export const apiService = {
    */
   setApiToken(token) {
     localStorage.setItem(STORAGE_KEYS.API_TOKEN, (token || '').trim());
+  },
+
+  /**
+   * 測試與 Google Apps Script 雲端試算表之連線狀態
+   */
+  async testConnection(url, token) {
+    const targetUrl = (url || this.getGasUrl()).trim();
+    const targetToken = (token !== undefined ? token : this.getApiToken()).trim();
+    if (!targetUrl) {
+      return { success: false, error: '未輸入 Google Apps Script 網頁應用程式網址' };
+    }
+    try {
+      const resp = await fetch(`${targetUrl}?action=getBootstrapData&token=${encodeURIComponent(targetToken)}`);
+      if (!resp.ok) {
+        return { success: false, error: `HTTP 連線錯誤 (${resp.status} ${resp.statusText})` };
+      }
+      const data = await resp.json();
+      if (data && data.success) {
+        return {
+          success: true,
+          message: `連線成功！已成功連線 Google 試算表，包含 ${data.classes?.length || 0} 個班級、${data.students?.length || 0} 位學生、${data.curriculum?.length || 0} 週上課進度。`,
+          data
+        };
+      }
+      return { success: false, error: data?.error || '試算表未回應正確格式' };
+    } catch (err) {
+      return { success: false, error: '連線逾時或跨網域失敗：' + (err.message || err.toString()) };
+    }
+  },
+
+  /**
+   * 一鍵全量推播本機名冊、課表與上課進度至 Google 試算表
+   */
+  async syncAllToGAS(data) {
+    return this.postActionToGAS('syncAllInitialData', data, '全量資料已同步至本機與雲端試算表');
   },
 
   /**

@@ -1,39 +1,39 @@
 <template>
   <div class="space-y-5">
     <!-- 後台主 Header 與次選單切換 -->
-    <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 space-y-3">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
+    <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 space-y-3.5">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <h2 class="text-base sm:text-lg font-bold text-white flex flex-wrap items-center gap-2">
             <span>🛠️ 體育教學管理後台</span>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 border border-emerald-500/30">
               新竹市大庄國小 115上 · 張永明 老師
             </span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-slate-400 mt-1">
             維護 五丁、五戊、六甲、六乙 名冊與轉學生、週一至週五課表 (第1~7節)、五上/六上教學進度表 (21週)
           </p>
         </div>
 
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
+        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
           <button
             @click="activeSubTab = 'students'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
-            :class="activeSubTab === 'students' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
+            class="active-press px-3.5 py-2 rounded-xl text-xs font-black transition border whitespace-nowrap"
+            :class="activeSubTab === 'students' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
           >
             👥 班級名冊
           </button>
           <button
             @click="activeSubTab = 'timetable'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
-            :class="activeSubTab === 'timetable' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
+            class="active-press px-3.5 py-2 rounded-xl text-xs font-black transition border whitespace-nowrap"
+            :class="activeSubTab === 'timetable' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
           >
             📅 週課表 (8節)
           </button>
           <button
             @click="activeSubTab = 'curriculum'"
-            class="active-press px-3 py-1.5 rounded-xl text-xs font-black transition border whitespace-nowrap flex-shrink-0"
-            :class="activeSubTab === 'curriculum' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700'"
+            class="active-press px-3.5 py-2 rounded-xl text-xs font-black transition border whitespace-nowrap"
+            :class="activeSubTab === 'curriculum' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
           >
             📚 教學進度 (21週)
           </button>
@@ -258,13 +258,13 @@
     <!-- 子分頁 3：上課進度與課程規劃 (支援五年級與六年級，各 21 週) -->
     <!-- ========================================================================= -->
     <div v-show="activeSubTab === 'curriculum'" class="space-y-4">
-      <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
+      <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="min-w-0">
           <h3 class="text-sm font-bold text-white">體育教學進度與評量檢核計畫 (115學年度上學期，共21週)</h3>
           <p class="text-xs text-slate-400 mt-0.5">依據教育部課綱與學校行事曆，支援五上、六上獨立單元與評量規劃</p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
           <!-- 年級切換 -->
           <div class="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700 text-xs font-bold">
             <button

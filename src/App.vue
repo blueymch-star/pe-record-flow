@@ -1,8 +1,7 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col max-w-2xl mx-auto pb-24 shadow-2xl relative font-sans">
+  <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col w-full max-w-2xl lg:max-w-6xl mx-auto pb-24 shadow-2xl relative font-sans">
     
     <!-- 頂部 Header -->
-    <!-- 頂部 Header (針對手機端緊湊排版，防止按鈕文字折行) -->
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0 flex-1">
         <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-slate-950 shadow-md flex-shrink-0 text-sm">
@@ -24,7 +23,7 @@
       </div>
 
       <div class="flex items-center gap-1.5 flex-shrink-0">
-        <!-- 後台管理切換按鈕 (設定 whitespace-nowrap 保證永遠單行) -->
+        <!-- 後台管理快速切換按鈕 -->
         <button
           @click="currentTab = currentTab === 'admin' ? 'home' : 'admin'"
           class="active-press px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition"
@@ -34,14 +33,16 @@
           <span>{{ currentTab === 'admin' ? '📋 返回速記' : '🛠️ 後台管理' }}</span>
         </button>
 
-        <!-- 離線 / 連線狀態指示 (設定 whitespace-nowrap 避免垂直換行) -->
-        <span
-          class="text-[10px] sm:text-[11px] font-semibold px-2 py-1 rounded-full border flex items-center gap-1 whitespace-nowrap flex-shrink-0"
-          :class="isOnline ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-amber-950/60 border-amber-500/40 text-amber-300'"
+        <!-- 雲端同步與連線狀態指示 (點擊開啟設定與診斷) -->
+        <button
+          @click="showSettingsModal = true"
+          class="text-[10px] sm:text-[11px] font-semibold px-2 py-1 rounded-full border flex items-center gap-1 whitespace-nowrap flex-shrink-0 cursor-pointer active-press transition"
+          :class="isCloudConnected ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : (isOnline ? 'bg-amber-950/60 border-amber-500/40 text-amber-300' : 'bg-red-950/60 border-red-500/40 text-red-300')"
+          :title="isCloudConnected ? '已成功連線 Google 試算表雲端資料庫' : '目前為本機快取模式，點擊測試連線'"
         >
-          <span class="w-1.5 h-1.5 rounded-full" :class="isOnline ? 'bg-emerald-400' : 'bg-amber-400'"></span>
-          <span>{{ isOnline ? '已就緒' : '離線' }}</span>
-        </span>
+          <span class="w-1.5 h-1.5 rounded-full" :class="isCloudConnected ? 'bg-emerald-400' : (isOnline ? 'bg-amber-400 animate-pulse' : 'bg-red-400')"></span>
+          <span>{{ isCloudConnected ? '雲端已連線' : (isOnline ? '本機快取' : '離線') }}</span>
+        </button>
 
         <!-- 設定 GAS URL 按鈕 -->
         <button
@@ -57,8 +58,8 @@
     <!-- 主要內容區 -->
     <main class="flex-1 p-3 sm:p-4 space-y-4 sm:space-y-5">
 
-      <!-- 分頁導航列 (前台 5 大模式，進入後台時自動隱藏) -->
-      <nav v-show="currentTab !== 'admin'" class="grid grid-cols-5 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+      <!-- 分頁導航列 (6 大核心模式，永遠保持可見，電腦版與手機版隨時切換) -->
+      <nav class="grid grid-cols-6 gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
         <button
           @click="currentTab = 'home'"
           class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
@@ -93,6 +94,13 @@
           :class="currentTab === 'voice' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
         >
           🎙️ 語音
+        </button>
+        <button
+          @click="currentTab = 'admin'"
+          class="py-2 sm:py-2.5 rounded-lg transition text-center whitespace-nowrap text-[11px] sm:text-xs"
+          :class="currentTab === 'admin' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+        >
+          🛠️ 後台
         </button>
       </nav>
 
@@ -379,6 +387,37 @@
             </p>
           </div>
 
+          <!-- 資料庫連線測試與手動全量推播 -->
+          <div class="space-y-2 pt-2 border-t border-slate-800">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                @click="handleTestConnection"
+                :disabled="isTestingConnection"
+                class="active-press disabled:opacity-50 flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              >
+                <span>{{ isTestingConnection ? '⏳ 連線測試中...' : '🔍 測試資料庫連線' }}</span>
+              </button>
+              <button
+                type="button"
+                @click="handleFullSyncToGAS"
+                :disabled="isSyncingAll"
+                class="active-press disabled:opacity-50 flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-teal-400 border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              >
+                <span>{{ isSyncingAll ? '⏳ 雲端同步中...' : '🔄 全量推播至試算表' }}</span>
+              </button>
+            </div>
+
+            <!-- 連線測試結果提示區塊 -->
+            <div
+              v-if="connectionTestResult"
+              class="p-2.5 rounded-xl text-xs font-medium border"
+              :class="connectionTestResult.success ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300' : 'bg-rose-950/60 border-rose-500/50 text-rose-300'"
+            >
+              {{ connectionTestResult.message || connectionTestResult.error }}
+            </div>
+          </div>
+
           <!-- 公用電腦隱私防護 -->
           <div class="pt-2 border-t border-slate-800">
             <button
@@ -434,7 +473,11 @@ const currentPeriod = ref(6);
 const currentVenue = ref('操場');
 
 const isOnline = ref(navigator.onLine);
+const isCloudConnected = ref(false);
 const isSaving = ref(false);
+const isTestingConnection = ref(false);
+const isSyncingAll = ref(false);
+const connectionTestResult = ref(null);
 const showSettingsModal = ref(false);
 const gasUrlInput = ref(apiService.getGasUrl());
 const apiTokenInput = ref(apiService.getApiToken());
@@ -487,11 +530,15 @@ const unsavedCount = computed(() => {
 
 onMounted(async () => {
   window.addEventListener('online', () => isOnline.value = true);
-  window.addEventListener('offline', () => isOnline.value = false);
+  window.addEventListener('offline', () => {
+    isOnline.value = false;
+    isCloudConnected.value = false;
+  });
 
   const data = await apiService.getBootstrapData();
   if (data) {
     bootstrapData.value = data;
+    isCloudConnected.value = !data.isMock;
     // 預設全班健康狀態為「良好」
     initDefaultHealth(selectedClassId.value);
   }
@@ -755,6 +802,52 @@ function saveSettings() {
   apiService.setApiToken(apiTokenInput.value);
   showSettingsModal.value = false;
   showToast('GAS 伺服器網址與 API 金鑰已儲存！', 'success');
+}
+
+async function handleTestConnection() {
+  isTestingConnection.value = true;
+  connectionTestResult.value = null;
+  try {
+    const res = await apiService.testConnection(gasUrlInput.value, apiTokenInput.value);
+    connectionTestResult.value = res;
+    if (res.success) {
+      isCloudConnected.value = true;
+      if (res.data) {
+        bootstrapData.value = res.data;
+      }
+      showToast('🎉 資料庫連線測試成功！已與雲端同步', 'success');
+    } else {
+      isCloudConnected.value = false;
+      showToast('連線測試失敗: ' + (res.error || '請檢查網址或金鑰'), 'error');
+    }
+  } catch (e) {
+    connectionTestResult.value = { success: false, error: e.message || '測試異常' };
+    isCloudConnected.value = false;
+  } finally {
+    isTestingConnection.value = false;
+  }
+}
+
+async function handleFullSyncToGAS() {
+  isSyncingAll.value = true;
+  try {
+    const payload = {
+      students: bootstrapData.value.students,
+      timetable: bootstrapData.value.timetable,
+      curriculum: bootstrapData.value.curriculum
+    };
+    const res = await apiService.syncAllToGAS(payload);
+    if (res && res.success) {
+      isCloudConnected.value = true;
+      showToast(res.message || '全量資料已同步至 Google 試算表！', 'success');
+    } else {
+      showToast('同步失敗: ' + (res?.error || '請檢查網路連線'), 'error');
+    }
+  } catch (err) {
+    showToast('同步異常：' + (err.message || '連線逾時'), 'error');
+  } finally {
+    isSyncingAll.value = false;
+  }
 }
 
 function handleClearLocalData() {

@@ -88,7 +88,7 @@ function initDatabase() {
       'DayOfWeek', 'Period', 'ClassId', 'Location'
     ],
     [SHEETS.CURRICULUM]: [
-      'WeekNo', 'UnitTitle', 'SuggestedContent', 'KeyFocus'
+      'Grade', 'WeekNo', 'DateRange', 'SchoolEvent', 'Venue', 'UnitTitle', 'SuggestedContent', 'KeyFocus', 'Resource', 'EvalMethod'
     ],
     [SHEETS.DAILY_LOGS]: [
       'LogId', 'Timestamp', 'Date', 'Period', 'ClassId', 'ActualContent', 'VoiceNotes'
@@ -403,6 +403,9 @@ function doPost(e) {
       case 'saveCurriculum':
         result = handleSaveCurriculum(payload.data);
         break;
+      case 'syncAllInitialData':
+        result = handleSyncAllInitialData(payload.data);
+        break;
       default:
         result = { success: false, error: 'Unknown post action: ' + action };
     }
@@ -638,14 +641,45 @@ function handleSaveCurriculum(curriculum) {
   }
   if (curriculum.length > 0) {
     const rows = curriculum.map(c => [
+      Number(c.grade || c.Grade || 5),
       Number(c.weekNo || c.WeekNo || 1),
+      c.dateRange || c.DateRange || '',
+      c.schoolEvent || c.SchoolEvent || '',
+      c.venue || c.Venue || '',
       c.unitTitle || c.UnitTitle || '',
       c.suggestedContent || c.SuggestedContent || '',
-      c.keyFocus || c.KeyFocus || ''
+      c.keyFocus || c.KeyFocus || '',
+      c.resource || c.Resource || '',
+      c.evalMethod || c.EvalMethod || ''
     ]);
     sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows.map(sanitizeRow));
   }
   return { success: true, count: curriculum.length, message: '上課進度與課程計畫已成功同步更新！' };
+}
+
+/**
+ * 一鍵將前端完整初始化資料 (名冊、課表、進度) 同步全量寫入試算表
+ */
+function handleSyncAllInitialData(data) {
+  let studentCount = 0;
+  let timetableCount = 0;
+  let curriculumCount = 0;
+
+  if (data.students && Array.isArray(data.students)) {
+    studentCount = handleSaveStudents(data.students).count;
+  }
+  if (data.timetable && Array.isArray(data.timetable)) {
+    timetableCount = handleSaveTimetable(data.timetable).count;
+  }
+  if (data.curriculum && Array.isArray(data.curriculum)) {
+    curriculumCount = handleSaveCurriculum(data.curriculum).count;
+  }
+
+  return {
+    success: true,
+    message: `已成功全量同步至 Google 試算表！包含名冊 ${studentCount} 人、課表 ${timetableCount} 堂、教學進度 ${curriculumCount} 週。`,
+    counts: { studentCount, timetableCount, curriculumCount }
+  };
 }
 
 // -------------------------------------------------------------
