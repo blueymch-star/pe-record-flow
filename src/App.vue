@@ -44,6 +44,16 @@
           <span>{{ isCloudConnected ? '雲端已連線' : (isOnline ? '本機快取' : '離線') }}</span>
         </button>
 
+        <!-- 一鍵自雲端強制同步最新資料 (手機/電腦即時對齊) -->
+        <button
+          @click="refreshFromCloud(true)"
+          :disabled="isRefreshing"
+          class="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex-shrink-0 active-press disabled:opacity-50"
+          :title="isRefreshing ? '正在同步雲端資料庫...' : '點擊立即與 Google 試算表同步最新名冊與進度'"
+        >
+          <span :class="{'inline-block animate-spin': isRefreshing}">🔄</span>
+        </button>
+
         <!-- 設定 GAS URL 按鈕 -->
         <button
           @click="showSettingsModal = true"
@@ -528,6 +538,8 @@ const unsavedCount = computed(() => {
   return hCount + aCount + fCount + sCount + (voiceNoteText.value ? 1 : 0);
 });
 
+const isRefreshing = ref(false);
+
 onMounted(async () => {
   window.addEventListener('online', () => isOnline.value = true);
   window.addEventListener('offline', () => {
@@ -535,14 +547,37 @@ onMounted(async () => {
     isCloudConnected.value = false;
   });
 
-  const data = await apiService.getBootstrapData();
-  if (data) {
-    bootstrapData.value = data;
-    isCloudConnected.value = !data.isMock;
-    // 預設全班健康狀態為「良好」
-    initDefaultHealth(selectedClassId.value);
-  }
+  // 啟動時強制嘗試由雲端獲取最新資料
+  await refreshFromCloud(false);
 });
+
+async function refreshFromCloud(isManual = false) {
+  isRefreshing.value = true;
+  try {
+    const data = await apiService.getBootstrapData(true);
+    if (data) {
+      bootstrapData.value = data;
+      isCloudConnected.value = !data.isMock;
+
+      // 班級自動校正：確保選取的班級存在於最新班級名單中（避免舊快取殘留「五年戊班」導致對應不到）
+      const classList = bootstrapData.value.classes || [];
+      if (classList.length > 0 && !classList.includes(selectedClassId.value)) {
+        const matched = classList.find(c => selectedClassId.value.includes(c) || c.includes(selectedClassId.value));
+        selectedClassId.value = matched || classList[0];
+      }
+      initDefaultHealth(selectedClassId.value);
+      if (isManual) {
+        showToast(`🎉 雲端同步完成！已取得 ${data.students?.length || 0} 位學生、${data.curriculum?.length || 0} 週課程`, 'success');
+      }
+    }
+  } catch (err) {
+    if (isManual) {
+      showToast('雲端同步失敗，請檢查網路或金鑰', 'error');
+    }
+  } finally {
+    isRefreshing.value = false;
+  }
+}
 
 function initDefaultHealth(classId) {
   const studs = bootstrapData.value.students.filter(s => String(s.classId) === String(classId));
@@ -801,7 +836,8 @@ function saveSettings() {
   apiService.setGasUrl(gasUrlInput.value);
   apiService.setApiToken(apiTokenInput.value);
   showSettingsModal.value = false;
-  showToast('GAS 伺服器網址與 API 金鑰已儲存！', 'success');
+  showToast('GAS 伺服器網址與 API 金鑰已儲存！正在同步雲端...', 'success');
+  refreshFromCloud(true);
 }
 
 async function handleTestConnection() {
@@ -814,6 +850,12 @@ async function handleTestConnection() {
       isCloudConnected.value = true;
       if (res.data) {
         bootstrapData.value = res.data;
+        const classList = bootstrapData.value.classes || [];
+        if (classList.length > 0 && !classList.includes(selectedClassId.value)) {
+          const matched = classList.find(c => selectedClassId.value.includes(c) || c.includes(selectedClassId.value));
+          selectedClassId.value = matched || classList[0];
+        }
+        initDefaultHealth(selectedClassId.value);
       }
       showToast('🎉 資料庫連線測試成功！已與雲端同步', 'success');
     } else {

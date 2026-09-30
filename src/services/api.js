@@ -8,7 +8,7 @@ const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
   API_TOKEN: 'pe_api_secret_token',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
-  LOCAL_DATA: 'pe_cached_bootstrap_data_v3' // 確保載入簡化班級名稱 (五丁、五戊、六甲、六乙)
+  LOCAL_DATA: 'pe_cached_bootstrap_data_v4' // 升級 v4 快取，強制手機與電腦取得最新雲端 80 位學生與 42 週課程
 };
 
 const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
@@ -16,10 +16,18 @@ const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxCF3u8giAvvq1E
 
 export const apiService = {
   /**
-   * 取得已設定的 GAS Web App URL
+   * 取得已設定的 GAS Web App URL (具備自動升級舊部署網址機制)
    */
   getGasUrl() {
-    return localStorage.getItem(STORAGE_KEYS.GAS_URL) || DEFAULT_GAS_URL;
+    const stored = localStorage.getItem(STORAGE_KEYS.GAS_URL);
+    // 自動修復：若手機/電腦存有舊版 deployment ID，自動切換至最新 @4 部署網址
+    if (stored && stored !== DEFAULT_GAS_URL) {
+      if (!stored.includes('AKfycbxCF3u8giAvvq1ER2r7soDGKWAv47BKuMdAm7rDUDjEYI4oR2979gHPBdDCiMxrawdA')) {
+        localStorage.setItem(STORAGE_KEYS.GAS_URL, DEFAULT_GAS_URL);
+        return DEFAULT_GAS_URL;
+      }
+    }
+    return stored || DEFAULT_GAS_URL;
   },
 
   /**
@@ -33,7 +41,12 @@ export const apiService = {
    * 取得已設定的 API 驗證金鑰 (Secret Token)
    */
   getApiToken() {
-    return localStorage.getItem(STORAGE_KEYS.API_TOKEN) || DEFAULT_API_TOKEN;
+    const stored = localStorage.getItem(STORAGE_KEYS.API_TOKEN);
+    if (!stored || stored.trim() === '') {
+      localStorage.setItem(STORAGE_KEYS.API_TOKEN, DEFAULT_API_TOKEN);
+      return DEFAULT_API_TOKEN;
+    }
+    return stored;
   },
 
   /**
@@ -53,7 +66,9 @@ export const apiService = {
       return { success: false, error: '未輸入 Google Apps Script 網頁應用程式網址' };
     }
     try {
-      const resp = await fetch(`${targetUrl}?action=getBootstrapData&token=${encodeURIComponent(targetToken)}`);
+      const resp = await fetch(`${targetUrl}?action=getBootstrapData&token=${encodeURIComponent(targetToken)}&_t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (!resp.ok) {
         return { success: false, error: `HTTP 連線錯誤 (${resp.status} ${resp.statusText})` };
       }
@@ -83,6 +98,7 @@ export const apiService = {
    */
   clearAllLocalData() {
     localStorage.removeItem(STORAGE_KEYS.LOCAL_DATA);
+    localStorage.removeItem('pe_cached_bootstrap_data_v3');
     localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
     localStorage.removeItem('pe_selected_class');
     localStorage.removeItem('pe_current_tab');
@@ -90,15 +106,31 @@ export const apiService = {
 
   /**
    * 取得系統初始化資料 (優先拉取 GAS，無網路或未設定時使用快取或 Mock 資料)
+   * @param {boolean} forceRefresh 是否強制略過本機快取重新由雲端拉取
    */
-  async getBootstrapData() {
+  async getBootstrapData(forceRefresh = false) {
     const gasUrl = this.getGasUrl();
     const token = this.getApiToken();
 
+    // 如果非強制刷新，且處於離線狀態，可直接嘗試讀取快取
+    if (!forceRefresh && typeof navigator !== 'undefined' && !navigator.onLine) {
+      const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          // ignore parse error
+        }
+      }
+    }
+
     if (gasUrl) {
       try {
-        const queryUrl = `${gasUrl}?action=getBootstrapData&token=${encodeURIComponent(token)}`;
-        const resp = await fetch(queryUrl);
+        // 加上時間戳記 & no-store 防止 iOS Safari 與 Chrome 行動端 HTTP 304 暫存
+        const queryUrl = `${gasUrl}?action=getBootstrapData&token=${encodeURIComponent(token)}&_t=${Date.now()}`;
+        const resp = await fetch(queryUrl, {
+          cache: 'no-store'
+        });
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.success) {
@@ -113,7 +145,7 @@ export const apiService = {
       }
     }
 
-    // 檢查是否有先前的本機快取
+    // 網路連線失敗或未配置時，檢查是否有先前的本機快取
     const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
     if (cached) {
       try {
