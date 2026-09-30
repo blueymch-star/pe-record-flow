@@ -791,7 +791,11 @@ function getSheetDataAsObjects(sheet) {
     if (row.every(cell => cell === '' || cell === null)) continue;
     const obj = {};
     headers.forEach((header, colIdx) => {
-      obj[header] = row[colIdx];
+      const val = row[colIdx];
+      obj[header] = val;
+      // 同步提供 camelCase 屬性，確保相容前端 Vue 資料綁定
+      const camelKey = header.charAt(0).toLowerCase() + header.slice(1);
+      obj[camelKey] = val;
     });
     objects.push(obj);
   }

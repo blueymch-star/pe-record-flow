@@ -140,24 +140,24 @@
           <tbody class="divide-y divide-slate-800 whitespace-nowrap">
             <tr
               v-for="student in currentClassStudents"
-              :key="student.studentId"
+              :key="student.studentId || student.StudentId"
               class="hover:bg-slate-800/40 transition"
             >
               <td class="py-2 px-2 text-center font-mono font-black text-emerald-400">
-                {{ student.seatNo }}
+                {{ student.seatNo ?? student.SeatNo }}
               </td>
               <td class="py-2 px-3 font-bold text-white whitespace-nowrap min-w-[76px]">
-                {{ student.name }}
+                {{ student.name || student.Name }}
               </td>
-              <td class="py-2 px-2 text-center font-semibold" :class="student.gender === 'M' ? 'text-blue-300' : 'text-pink-300'">
-                {{ student.gender === 'M' ? '男' : '女' }}
+              <td class="py-2 px-2 text-center font-semibold" :class="(student.gender || student.Gender) === 'M' ? 'text-blue-300' : 'text-pink-300'">
+                {{ (student.gender || student.Gender) === 'M' ? '男' : '女' }}
               </td>
               <td class="py-2 px-3 font-mono text-slate-400">
-                {{ student.studentId }}
+                {{ student.studentId || student.StudentId }}
               </td>
               <td class="py-2 px-3">
-                <span v-if="student.medicalNotes" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-950/60 text-red-300 border border-red-800/50 text-[11px] font-semibold">
-                  ❤️ {{ student.medicalNotes }}
+                <span v-if="student.medicalNotes || student.MedicalNotes" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-950/60 text-red-300 border border-red-800/50 text-[11px] font-semibold">
+                  ❤️ {{ student.medicalNotes || student.MedicalNotes }}
                 </span>
                 <span v-else class="text-slate-600">-</span>
               </td>
@@ -663,6 +663,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { STANDARD_VENUES } from '../services/mockData';
+import { normalizeStudent, normalizeTimetableItem, normalizeCurriculumItem } from '../services/api';
 
 const props = defineProps({
   students: {
@@ -705,12 +706,12 @@ const selectedClass = ref('五丁');
 watch(
   () => [props.students, props.timetable, props.curriculum, props.classes],
   () => {
-    localStudents.value = JSON.parse(JSON.stringify(props.students || []));
-    localTimetable.value = JSON.parse(JSON.stringify(props.timetable || []));
-    localCurriculum.value = JSON.parse(JSON.stringify(props.curriculum || []));
+    localStudents.value = (props.students || []).map(normalizeStudent);
+    localTimetable.value = (props.timetable || []).map(normalizeTimetableItem);
+    localCurriculum.value = (props.curriculum || []).map(normalizeCurriculumItem);
     localClasses.value = Array.from(new Set([
       ...(props.classes || []),
-      ...localStudents.value.map(s => s.classId || s.ClassId).filter(Boolean)
+      ...localStudents.value.map(s => s.classId).filter(Boolean)
     ]));
     if (!localClasses.value.includes(selectedClass.value) && localClasses.value.length > 0) {
       selectedClass.value = localClasses.value[0];
@@ -726,7 +727,7 @@ const classList = computed(() => {
 const currentClassStudents = computed(() => {
   return localStudents.value
     .filter(s => String(s.classId || s.ClassId) === String(selectedClass.value))
-    .sort((a, b) => Number(a.seatNo) - Number(b.seatNo));
+    .sort((a, b) => Number(a.seatNo || a.SeatNo || 0) - Number(b.seatNo || b.SeatNo || 0));
 });
 
 function getStudentCountByClass(classId) {
@@ -764,12 +765,12 @@ function openAddStudentModal() {
 function openEditStudentModal(student) {
   isEditingStudent.value = true;
   studentForm.value = {
-    classId: student.classId || selectedClass.value,
-    studentId: student.studentId,
-    seatNo: student.seatNo,
-    name: student.name,
-    gender: student.gender || 'M',
-    medicalNotes: student.medicalNotes || ''
+    classId: student.classId || student.ClassId || selectedClass.value,
+    studentId: student.studentId || student.StudentId,
+    seatNo: student.seatNo !== undefined ? student.seatNo : student.SeatNo,
+    name: student.name || student.Name,
+    gender: student.gender || student.Gender || 'M',
+    medicalNotes: student.medicalNotes !== undefined ? student.medicalNotes : (student.MedicalNotes || '')
   };
   showStudentModal.value = true;
 }
@@ -783,23 +784,23 @@ function saveStudentForm() {
   const generatedId = studentForm.value.studentId.trim() || `${studentForm.value.classId}${String(studentForm.value.seatNo).padStart(2, '0')}`;
 
   if (isEditingStudent.value) {
-    const idx = localStudents.value.findIndex(s => s.studentId === studentForm.value.studentId);
+    const idx = localStudents.value.findIndex(s => (s.studentId || s.StudentId) === studentForm.value.studentId);
     if (idx > -1) {
-      localStudents.value[idx] = {
+      localStudents.value[idx] = normalizeStudent({
         ...localStudents.value[idx],
         seatNo: studentForm.value.seatNo,
         name: studentForm.value.name.trim(),
         gender: studentForm.value.gender,
         medicalNotes: studentForm.value.medicalNotes.trim()
-      };
+      });
     }
   } else {
-    const existSeat = currentClassStudents.value.find(s => Number(s.seatNo) === Number(studentForm.value.seatNo));
+    const existSeat = currentClassStudents.value.find(s => Number(s.seatNo || s.SeatNo) === Number(studentForm.value.seatNo));
     if (existSeat) {
       emit('toast', `座號 ${studentForm.value.seatNo} 號已存在，請更換座號`, 'error');
       return;
     }
-    localStudents.value.push({
+    localStudents.value.push(normalizeStudent({
       classId: studentForm.value.classId,
       studentId: generatedId,
       seatNo: studentForm.value.seatNo,
@@ -807,7 +808,7 @@ function saveStudentForm() {
       gender: studentForm.value.gender,
       age: (studentForm.value.classId.startsWith('5') || studentForm.value.classId.startsWith('五')) ? 11 : 12,
       medicalNotes: studentForm.value.medicalNotes.trim()
-    });
+    }));
   }
 
   showStudentModal.value = false;
@@ -816,7 +817,7 @@ function saveStudentForm() {
 
 function deleteStudent(studentId) {
   if (confirm(`確定要刪除此位學生紀錄嗎？`)) {
-    localStudents.value = localStudents.value.filter(s => s.studentId !== studentId);
+    localStudents.value = localStudents.value.filter(s => (s.studentId || s.StudentId) !== studentId);
     emit('toast', '已刪除學生', 'success');
   }
 }

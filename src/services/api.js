@@ -8,11 +8,118 @@ const STORAGE_KEYS = {
   GAS_URL: 'pe_gas_webapp_url',
   API_TOKEN: 'pe_api_secret_token',
   OFFLINE_QUEUE: 'pe_offline_sync_queue',
-  LOCAL_DATA: 'pe_cached_bootstrap_data_v4' // 升級 v4 快取，強制手機與電腦取得最新雲端 80 位學生與 42 週課程
+  LOCAL_DATA: 'pe_cached_bootstrap_data_v5' // 升級 v5 快取，確保雙向大小寫相容並即時顯示學生姓名與座號
 };
 
 const DEFAULT_API_TOKEN = 'pe-flow-sec-2026-tk99';
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxCF3u8giAvvq1ER2r7soDGKWAv47BKuMdAm7rDUDjEYI4oR2979gHPBdDCiMxrawdA/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbx4vuh0f8Uc7lOLLy13bRIhF0saOThDuPqKF2c8TSAd0CJRpYH-VAlZ331Yw0wjz1zO/exec';
+
+/**
+ * 欄位大小寫雙向容錯標準化函式 (相容 Google 試算表 PascalCase 與 Vue camelCase)
+ */
+export function normalizeStudent(s) {
+  if (!s) return s;
+  const classId = s.classId || s.ClassId || '';
+  const studentId = s.studentId || s.StudentId || '';
+  const seatNo = (s.seatNo !== undefined && s.seatNo !== null && s.seatNo !== '') 
+    ? Number(s.seatNo) 
+    : ((s.SeatNo !== undefined && s.SeatNo !== null && s.SeatNo !== '') ? Number(s.SeatNo) : '');
+  const name = s.name || s.Name || '';
+  const gender = s.gender || s.Gender || 'M';
+  const medicalNotes = s.medicalNotes !== undefined ? s.medicalNotes : (s.MedicalNotes !== undefined ? s.MedicalNotes : '');
+
+  return {
+    ...s,
+    classId,
+    ClassId: classId,
+    studentId,
+    StudentId: studentId,
+    seatNo,
+    SeatNo: seatNo,
+    name,
+    Name: name,
+    gender,
+    Gender: gender,
+    medicalNotes,
+    MedicalNotes: medicalNotes
+  };
+}
+
+export function normalizeTimetableItem(t) {
+  if (!t) return t;
+  const dayOfWeek = Number(t.dayOfWeek !== undefined ? t.dayOfWeek : t.DayOfWeek);
+  const period = Number(t.period !== undefined ? t.period : t.Period);
+  const classId = t.classId || t.ClassId || '';
+  const location = t.location || t.Location || '';
+  return {
+    ...t,
+    dayOfWeek,
+    DayOfWeek: dayOfWeek,
+    period,
+    Period: period,
+    classId,
+    ClassId: classId,
+    location,
+    Location: location
+  };
+}
+
+export function normalizeCurriculumItem(c) {
+  if (!c) return c;
+  const grade = Number(c.grade !== undefined ? c.grade : c.Grade);
+  const weekNo = Number(c.weekNo !== undefined ? c.weekNo : c.WeekNo);
+  const dateRange = c.dateRange || c.DateRange || '';
+  const schoolEvent = c.schoolEvent || c.SchoolEvent || '';
+  const venue = c.venue || c.Venue || '';
+  const unitTitle = c.unitTitle || c.UnitTitle || '';
+  const suggestedContent = c.suggestedContent || c.SuggestedContent || '';
+  const keyFocus = c.keyFocus || c.KeyFocus || '';
+  const resource = c.resource || c.Resource || '';
+  const evalMethod = c.evalMethod || c.EvalMethod || '';
+  return {
+    ...c,
+    grade,
+    Grade: grade,
+    weekNo,
+    WeekNo: weekNo,
+    dateRange,
+    DateRange: dateRange,
+    schoolEvent,
+    SchoolEvent: schoolEvent,
+    venue,
+    Venue: venue,
+    unitTitle,
+    UnitTitle: unitTitle,
+    suggestedContent,
+    SuggestedContent: suggestedContent,
+    keyFocus,
+    KeyFocus: keyFocus,
+    resource,
+    Resource: resource,
+    evalMethod,
+    EvalMethod: evalMethod
+  };
+}
+
+export function normalizeBootstrapData(data) {
+  if (!data) return data;
+  if (Array.isArray(data.students)) {
+    data.students = data.students.map(normalizeStudent);
+  }
+  if (Array.isArray(data.timetable)) {
+    data.timetable = data.timetable.map(normalizeTimetableItem);
+  }
+  if (Array.isArray(data.curriculum)) {
+    data.curriculum = data.curriculum.map(normalizeCurriculumItem);
+  }
+  if (Array.isArray(data.students)) {
+    const fromStudents = Array.from(new Set(data.students.map(s => s.classId).filter(Boolean)));
+    if (fromStudents.length > 0) {
+      data.classes = Array.from(new Set([...(data.classes || []), ...fromStudents]));
+    }
+  }
+  return data;
+}
 
 export const apiService = {
   /**
@@ -20,9 +127,9 @@ export const apiService = {
    */
   getGasUrl() {
     const stored = localStorage.getItem(STORAGE_KEYS.GAS_URL);
-    // 自動修復：若手機/電腦存有舊版 deployment ID，自動切換至最新 @4 部署網址
+    // 自動修復：若手機/電腦存有舊版 deployment ID，自動切換至最新 @5 部署網址
     if (stored && stored !== DEFAULT_GAS_URL) {
-      if (!stored.includes('AKfycbxCF3u8giAvvq1ER2r7soDGKWAv47BKuMdAm7rDUDjEYI4oR2979gHPBdDCiMxrawdA')) {
+      if (!stored.includes('AKfycbx4vuh0f8Uc7lOLLy13bRIhF0saOThDuPqKF2c8TSAd0CJRpYH-VAlZ331Yw0wjz1zO')) {
         localStorage.setItem(STORAGE_KEYS.GAS_URL, DEFAULT_GAS_URL);
         return DEFAULT_GAS_URL;
       }
@@ -74,10 +181,11 @@ export const apiService = {
       }
       const data = await resp.json();
       if (data && data.success) {
+        const normalized = normalizeBootstrapData(data);
         return {
           success: true,
-          message: `連線成功！已成功連線 Google 試算表，包含 ${data.classes?.length || 0} 個班級、${data.students?.length || 0} 位學生、${data.curriculum?.length || 0} 週上課進度。`,
-          data
+          message: `連線成功！已成功連線 Google 試算表，包含 ${normalized.classes?.length || 0} 個班級、${normalized.students?.length || 0} 位學生、${normalized.curriculum?.length || 0} 週上課進度。`,
+          data: normalized
         };
       }
       return { success: false, error: data?.error || '試算表未回應正確格式' };
@@ -117,7 +225,7 @@ export const apiService = {
       const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
       if (cached) {
         try {
-          return JSON.parse(cached);
+          return normalizeBootstrapData(JSON.parse(cached));
         } catch (e) {
           // ignore parse error
         }
@@ -134,8 +242,9 @@ export const apiService = {
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.success) {
-            localStorage.setItem(STORAGE_KEYS.LOCAL_DATA, JSON.stringify(data));
-            return data;
+            const normalized = normalizeBootstrapData(data);
+            localStorage.setItem(STORAGE_KEYS.LOCAL_DATA, JSON.stringify(normalized));
+            return normalized;
           } else if (data && data.error && data.error.includes('Unauthorized')) {
             console.warn('GAS API 驗證金鑰不正確:', data.error);
           }
@@ -149,14 +258,14 @@ export const apiService = {
     const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
     if (cached) {
       try {
-        return JSON.parse(cached);
+        return normalizeBootstrapData(JSON.parse(cached));
       } catch (e) {
         // ignore parse error
       }
     }
 
     // 預設 Mock 資料 (張永明老師：五丁、五戊、六甲、六乙，115學年度上學期)
-    return {
+    return normalizeBootstrapData({
       success: true,
       isMock: true,
       teacher: '張永明',
@@ -166,7 +275,7 @@ export const apiService = {
       curriculum: MOCK_CURRICULUM,
       norms: NORMS_TABLE,
       scoreSettings: []
-    };
+    });
   },
 
   /**
