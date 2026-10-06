@@ -1,7 +1,7 @@
 /**
  * PE Record Flow API 與離線同步模組
  */
-import { MOCK_STUDENTS, MOCK_TIMETABLE, MOCK_CURRICULUM, MOCK_CLASSES } from './mockData';
+import { MOCK_STUDENTS, MOCK_TIMETABLE, MOCK_CURRICULUM, MOCK_CLASSES, MOCK_RECENT_LOGS } from './mockData';
 import { NORMS_TABLE } from './norms';
 
 const STORAGE_KEYS = {
@@ -111,6 +111,20 @@ export function normalizeBootstrapData(data) {
   }
   if (Array.isArray(data.curriculum)) {
     data.curriculum = data.curriculum.map(normalizeCurriculumItem);
+  }
+  if (Array.isArray(data.recentLogs)) {
+    data.recentLogs = data.recentLogs.map(log => ({
+      ...log,
+      logId: log.logId || log.LogId || '',
+      date: log.date || log.Date || '',
+      period: Number(log.period !== undefined ? log.period : log.Period) || '',
+      classId: log.classId || log.ClassId || '',
+      actualContent: log.actualContent || log.ActualContent || '',
+      voiceNotes: log.voiceNotes || log.VoiceNotes || '',
+      timestamp: log.timestamp || log.Timestamp || ''
+    }));
+  } else {
+    data.recentLogs = [];
   }
   if (Array.isArray(data.students)) {
     const fromStudents = Array.from(new Set(data.students.map(s => s.classId).filter(Boolean)));
@@ -278,7 +292,8 @@ export const apiService = {
       timetable: MOCK_TIMETABLE,
       curriculum: MOCK_CURRICULUM,
       norms: NORMS_TABLE,
-      scoreSettings: []
+      scoreSettings: [],
+      recentLogs: MOCK_RECENT_LOGS
     });
   },
 
@@ -311,16 +326,93 @@ export const apiService = {
         body: JSON.stringify(payload)
       });
       const result = await resp.json();
+      if (result && result.success && sessionPayload?.dailyLog) {
+        this.appendRecentLogToLocal(sessionPayload.dailyLog);
+      }
       return result;
     } catch (err) {
       console.warn('網路傳輸失敗，加入離線重試佇列:', err);
       this.enqueueOfflineData(payload);
+      if (sessionPayload?.dailyLog) {
+        this.appendRecentLogToLocal(sessionPayload.dailyLog);
+      }
       return {
         success: true,
         offline: true,
         message: '網路斷線，紀錄已加入離線待傳佇列，連線後自動補傳！'
       };
     }
+  },
+
+  /**
+   * 將剛儲存的日誌加入本機快取最前面
+   */
+  appendRecentLogToLocal(dailyLog) {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (!Array.isArray(parsed.recentLogs)) parsed.recentLogs = [];
+        const newLog = {
+          logId: 'LOG_' + Date.now(),
+          date: dailyLog.date,
+          period: Number(dailyLog.period) || 1,
+          classId: dailyLog.classId,
+          actualContent: dailyLog.actualContent || '',
+          voiceNotes: dailyLog.voiceNotes || '',
+          timestamp: new Date().toISOString()
+        };
+        // 避免重複加入相同日期與節次
+        parsed.recentLogs = [newLog, ...parsed.recentLogs.filter(l => !(l.date === newLog.date && String(l.period) === String(newLog.period) && l.classId === newLog.classId))].slice(0, 50);
+        localStorage.setItem(STORAGE_KEYS.LOCAL_DATA, JSON.stringify(parsed));
+      }
+    } catch (e) {
+      console.warn('加入本地 recentLogs 失敗:', e);
+    }
+  },
+
+  /**
+   * 查詢指定班級或全校課堂日誌紀錄 (可指定 classId，空字串表示全部)
+   */
+  async getDailyLogs(classId = '') {
+    const gasUrl = this.getGasUrl();
+    const token = this.getApiToken();
+    if (gasUrl) {
+      try {
+        const queryUrl = `${gasUrl}?action=getDailyLogs&token=${encodeURIComponent(token)}${classId ? `&classId=${encodeURIComponent(classId)}` : ''}&_t=${Date.now()}`;
+        const resp = await fetch(queryUrl, { cache: 'no-store' });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.success && Array.isArray(data.logs)) {
+            return data.logs.map(log => ({
+              ...log,
+              logId: log.logId || log.LogId || '',
+              date: log.date || log.Date || '',
+              period: Number(log.period !== undefined ? log.period : log.Period) || '',
+              classId: log.classId || log.ClassId || '',
+              actualContent: log.actualContent || log.ActualContent || '',
+              voiceNotes: log.voiceNotes || log.VoiceNotes || '',
+              timestamp: log.timestamp || log.Timestamp || ''
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('獲取 DailyLogs 失敗:', e);
+      }
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.LOCAL_DATA);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        let logs = parsed.recentLogs || [];
+        if (classId && classId !== 'ALL') {
+          logs = logs.filter(l => String(l.classId || l.ClassId) === String(classId));
+        }
+        return logs;
+      } catch (e) {}
+    }
+    return [];
   },
 
   /**

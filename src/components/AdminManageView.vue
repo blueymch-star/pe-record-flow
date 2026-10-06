@@ -37,6 +37,13 @@
           >
             📚 教學進度 (21週)
           </button>
+          <button
+            @click="activeSubTab = 'logs'"
+            class="active-press px-3.5 py-2 rounded-xl text-xs font-black transition border whitespace-nowrap"
+            :class="activeSubTab === 'logs' ? 'bg-emerald-600 text-white border-emerald-400 shadow' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
+          >
+            📜 課堂日誌
+          </button>
         </div>
       </div>
     </div>
@@ -377,6 +384,87 @@
     </div>
 
     <!-- ========================================================================= -->
+    <!-- 子分頁 4：課堂歷史日誌管理 (DailyLogs) -->
+    <!-- ========================================================================= -->
+    <div v-show="activeSubTab === 'logs'" class="space-y-4">
+      <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div class="min-w-0">
+          <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <span>📜 課堂日誌與上課日期紀錄 (DailyLogs)</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 border border-emerald-500/30">
+              共 {{ filteredAdminLogs.length }} 堂課
+            </span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            記錄每一堂課的上課日期、節次、班級、教學單元進度與課堂備忘
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          <!-- 班級篩選 -->
+          <select
+            v-model="adminLogClassFilter"
+            class="bg-slate-800 text-emerald-300 font-bold text-xs rounded-xl px-3 py-2 border border-slate-600 focus:outline-none"
+          >
+            <option value="ALL">全部班級 ({{ (props.recentLogs || []).length }} 筆)</option>
+            <option v-for="c in classList" :key="c" :value="c">{{ c }}</option>
+          </select>
+
+          <!-- 關鍵字搜尋 -->
+          <input
+            v-model="adminLogKeyword"
+            type="text"
+            placeholder="搜尋日期、進度或筆記..."
+            class="bg-slate-800 text-slate-100 text-xs rounded-xl px-3 py-2 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-48"
+          />
+        </div>
+      </div>
+
+      <!-- 日誌列表 -->
+      <div class="glass-panel rounded-2xl border border-slate-700/80 p-3 overflow-x-auto">
+        <table class="w-full text-xs text-left min-w-[640px]">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400 font-bold whitespace-nowrap">
+              <th class="py-2.5 px-3">上課日期</th>
+              <th class="py-2.5 px-3">班級 / 節次</th>
+              <th class="py-2.5 px-3">教學內容與進度</th>
+              <th class="py-2.5 px-3">速記隨行筆記</th>
+              <th class="py-2.5 px-3 text-right">同步時間</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr v-if="filteredAdminLogs.length === 0">
+              <td colspan="5" class="py-10 text-center text-slate-500">
+                尚未有相符的課堂日誌紀錄。課後同步時將自動記錄上課日期與內容！
+              </td>
+            </tr>
+            <tr v-for="log in filteredAdminLogs" :key="log.logId || (log.date + '_' + log.period + '_' + log.classId)" class="hover:bg-slate-800/40">
+              <td class="py-3 px-3 font-mono font-bold text-emerald-400 whitespace-nowrap">
+                📅 {{ log.date }}
+              </td>
+              <td class="py-3 px-3 font-bold text-white whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-300 mr-1.5">{{ log.classId }}</span>
+                <span class="text-slate-400 text-[11px]">第 {{ log.period }} 節</span>
+              </td>
+              <td class="py-3 px-3 text-slate-200">
+                {{ log.actualContent || '-' }}
+              </td>
+              <td class="py-3 px-3 text-emerald-300">
+                <span v-if="log.voiceNotes" class="inline-flex items-center gap-1 bg-emerald-950/40 px-2 py-1 rounded-lg border border-emerald-500/20">
+                  🎙️ {{ log.voiceNotes }}
+                </span>
+                <span v-else class="text-slate-500">-</span>
+              </td>
+              <td class="py-3 px-3 text-right font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                {{ formatAdminTime(log.timestamp) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
     <!-- 彈窗：新增/編輯學生 Modal -->
     <!-- ========================================================================= -->
     <div
@@ -681,8 +769,43 @@ const props = defineProps({
   classes: {
     type: Array,
     default: () => ['五丁', '五戊', '六甲', '六乙']
+  },
+  recentLogs: {
+    type: Array,
+    default: () => []
   }
 });
+
+const adminLogClassFilter = ref('ALL');
+const adminLogKeyword = ref('');
+
+const filteredAdminLogs = computed(() => {
+  let list = props.recentLogs || [];
+  if (adminLogClassFilter.value && adminLogClassFilter.value !== 'ALL') {
+    list = list.filter(l => String(l.classId || l.ClassId) === String(adminLogClassFilter.value));
+  }
+  if (adminLogKeyword.value.trim()) {
+    const kw = adminLogKeyword.value.trim().toLowerCase();
+    list = list.filter(l => 
+      String(l.date || '').toLowerCase().includes(kw) ||
+      String(l.actualContent || '').toLowerCase().includes(kw) ||
+      String(l.voiceNotes || '').toLowerCase().includes(kw) ||
+      String(l.classId || '').toLowerCase().includes(kw)
+    );
+  }
+  return list;
+});
+
+function formatAdminTime(ts) {
+  if (!ts) return '-';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return String(ts);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch (e) {
+    return String(ts);
+  }
+}
 
 const emit = defineEmits([
   'save-students',

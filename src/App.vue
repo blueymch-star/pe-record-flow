@@ -127,12 +127,43 @@
       <!-- 視圖 2: 手機端大按鈕座號網格與速記 (身體狀況快篩 + 學習態度快記 + 上課場地編輯) -->
       <div v-show="currentTab === 'record'" class="space-y-4">
         <div class="glass-panel p-3.5 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="w-full sm:w-auto">
+            <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-base font-bold text-white flex items-center gap-1.5">
-                <span>{{ selectedClassId }} 課後 10 分鐘速記</span>
+                <span>{{ selectedClassId }} 課後速記</span>
               </h2>
-              <div class="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700">
+
+              <!-- 日期選擇 -->
+              <div class="flex items-center gap-1 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 font-bold">📅 日期：</span>
+                <input
+                  type="date"
+                  v-model="selectedDate"
+                  class="bg-transparent text-emerald-300 font-bold text-xs focus:outline-none cursor-pointer font-mono"
+                />
+                <button
+                  v-if="selectedDate !== todayStr"
+                  @click="selectedDate = todayStr"
+                  class="text-[10px] text-amber-300 hover:text-white px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-600/50"
+                  title="回今天"
+                >
+                  今天
+                </button>
+              </div>
+
+              <!-- 節次選擇 -->
+              <div class="flex items-center gap-1 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 font-bold">⏰ 節次：</span>
+                <select
+                  v-model.number="currentPeriod"
+                  class="bg-transparent text-emerald-300 font-bold text-xs focus:outline-none cursor-pointer"
+                >
+                  <option v-for="p in [1, 2, 3, 4, 5, 6, 7, 8]" :key="p" :value="p" class="bg-slate-800 text-white">第 {{ p }} 節</option>
+                </select>
+              </div>
+
+              <!-- 場地選擇 -->
+              <div class="flex items-center gap-1 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700">
                 <span class="text-xs text-slate-400 font-bold">📍 場地：</span>
                 <select
                   v-model="currentVenue"
@@ -142,14 +173,26 @@
                 </select>
               </div>
             </div>
-            <p class="text-xs text-slate-400 mt-1">點擊座號可記態度 ±4 分，右上方愛心為先天痼疾警示</p>
+            <p class="text-xs text-slate-400 mt-1">
+              當前記錄：<strong class="text-emerald-300">{{ selectedDate }}</strong> 第 <strong class="text-emerald-300">{{ currentPeriod }}</strong> 節 ({{ currentVenue }}) · 點擊座號可記態度 ±4 分
+            </p>
           </div>
-          <button
-            @click="quickArchiveAll"
-            class="active-press bg-emerald-700/60 hover:bg-emerald-600 text-emerald-200 text-xs font-bold px-3 py-2 rounded-lg border border-emerald-500/50 flex items-center gap-1 shadow whitespace-nowrap"
-          >
-            <span>⚡ 全班正常歸檔</span>
-          </button>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button
+              @click="openHistoryModal"
+              class="active-press bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-lg border border-slate-600 flex items-center gap-1 shadow whitespace-nowrap"
+              title="查看課堂歷史日誌"
+            >
+              <span>📜 課堂歷史日誌</span>
+            </button>
+            <button
+              @click="quickArchiveAll"
+              class="active-press bg-emerald-700/60 hover:bg-emerald-600 text-emerald-200 text-xs font-bold px-3 py-2 rounded-lg border border-emerald-500/50 flex items-center gap-1 shadow whitespace-nowrap"
+            >
+              <span>⚡ 全班正常歸檔</span>
+            </button>
+          </div>
         </div>
 
         <SeatGrid
@@ -300,6 +343,7 @@
           :timetable="bootstrapData.timetable"
           :curriculum="bootstrapData.curriculum"
           :classes="bootstrapData.classes"
+          :recent-logs="bootstrapData.recentLogs"
           @save-students="handleSaveStudentsFromAdmin"
           @save-timetable="handleSaveTimetableFromAdmin"
           @save-curriculum="handleSaveCurriculumFromAdmin"
@@ -312,7 +356,8 @@
     <!-- 底部固定儲存浮動列 (前台課後 10 分鐘一鍵批次同步，後台時自動隱藏) -->
     <div v-if="currentTab !== 'admin'" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-2.5 max-w-2xl mx-auto flex items-center justify-between gap-2">
       <div class="text-xs text-slate-400 whitespace-nowrap min-w-0 truncate">
-        <span class="font-bold text-white">{{ selectedClassId }} ({{ currentVenue }})</span>
+        <span class="font-bold text-white">{{ selectedClassId }}</span>
+        <span class="text-slate-400 text-[11px] ml-1">({{ selectedDate }} 第{{ currentPeriod }}節·{{ currentVenue }})</span>
         <span class="ml-1 text-[11px] text-emerald-400 font-mono">異動 {{ unsavedCount }} 筆</span>
       </div>
 
@@ -451,6 +496,90 @@
       </div>
     </div>
 
+    <!-- 歷史課堂日誌彈窗 (DailyLogs 歷程檢視) -->
+    <div v-if="showHistoryModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl p-4 sm:p-5 max-w-2xl w-full shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="font-black text-sm sm:text-base text-white flex items-center gap-1.5">
+              <span>📜 課堂歷史日誌歷程</span>
+            </h3>
+            <span class="text-[11px] text-slate-400">({{ displayedLogs.length }} 堂課)</span>
+          </div>
+          <button @click="showHistoryModal = false" class="text-slate-400 hover:text-white p-1">✕</button>
+        </div>
+
+        <!-- 班級篩選與重整按鈕 -->
+        <div class="flex items-center justify-between gap-2 py-3 border-b border-slate-800 flex-wrap">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-300">班級篩選：</label>
+            <select
+              v-model="historyClassFilter"
+              @change="fetchHistoryLogs"
+              class="bg-slate-800 text-emerald-300 font-bold text-xs rounded-xl px-2.5 py-1.5 border border-slate-700 focus:outline-none"
+            >
+              <option value="ALL">全部班級</option>
+              <option v-for="c in bootstrapData.classes" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
+
+          <button
+            @click="fetchHistoryLogs"
+            :disabled="isFetchingHistory"
+            class="active-press px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1"
+          >
+            <span :class="{'inline-block animate-spin': isFetchingHistory}">🔄</span>
+            <span>重新載入</span>
+          </button>
+        </div>
+
+        <!-- 日誌內容列表 -->
+        <div class="flex-1 overflow-y-auto py-3 space-y-2.5 pr-1">
+          <div v-if="displayedLogs.length === 0" class="text-center py-10 text-slate-500 text-xs">
+            目前暫無此班級的課堂歷史日誌。<br/>
+            進行課後同步時，將自動以當前選擇之上課日期寫入日誌記錄！
+          </div>
+
+          <div
+            v-for="log in displayedLogs"
+            :key="log.logId || (log.date + '_' + log.period + '_' + log.classId)"
+            class="p-3.5 rounded-2xl bg-slate-800/70 border border-slate-700/80 hover:border-emerald-500/40 transition space-y-2"
+          >
+            <div class="flex items-center justify-between flex-wrap gap-1.5">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold">
+                  📅 {{ log.date }}
+                </span>
+                <span class="text-xs font-bold text-white">
+                  {{ log.classId }} · 第 {{ log.period }} 節
+                </span>
+              </div>
+              <span v-if="log.timestamp" class="text-[10px] text-slate-400 font-mono">
+                同步於 {{ formatLogTime(log.timestamp) }}
+              </span>
+            </div>
+
+            <div v-if="log.actualContent" class="text-xs text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+              <span class="text-slate-400 font-bold">📌 進度：</span>{{ log.actualContent }}
+            </div>
+
+            <div v-if="log.voiceNotes" class="text-xs text-emerald-200/90 bg-emerald-950/30 p-2 rounded-xl border border-emerald-500/20 flex items-start gap-1.5">
+              <span class="text-sm">🎙️</span>
+              <div class="flex-1">
+                <span class="text-emerald-400 font-bold">隨行筆記：</span>{{ log.voiceNotes }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end">
+          <button @click="showHistoryModal = false" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white">
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 提示訊息 Toast -->
     <transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 translate-y-2" leave-active-class="transition duration-150 ease-in" leave-to-class="opacity-0 translate-y-2">
       <div
@@ -481,6 +610,12 @@ const currentTab = ref('home');
 const selectedClassId = ref('五丁');
 const currentPeriod = ref(6);
 const currentVenue = ref('操場');
+const selectedDate = ref(new Date().toLocaleDateString('sv'));
+const todayStr = computed(() => new Date().toLocaleDateString('sv'));
+
+const showHistoryModal = ref(false);
+const historyClassFilter = ref('ALL');
+const isFetchingHistory = ref(false);
 
 const isOnline = ref(navigator.onLine);
 const isCloudConnected = ref(false);
@@ -506,8 +641,54 @@ const bootstrapData = ref({
   students: [],
   timetable: [],
   curriculum: [],
-  norms: []
+  norms: [],
+  recentLogs: []
 });
+
+const displayedLogs = computed(() => {
+  const list = bootstrapData.value.recentLogs || [];
+  if (!historyClassFilter.value || historyClassFilter.value === 'ALL') {
+    return list;
+  }
+  return list.filter(l => String(l.classId || l.ClassId) === String(historyClassFilter.value));
+});
+
+async function openHistoryModal() {
+  historyClassFilter.value = selectedClassId.value;
+  showHistoryModal.value = true;
+  await fetchHistoryLogs();
+}
+
+async function fetchHistoryLogs() {
+  isFetchingHistory.value = true;
+  try {
+    const logs = await apiService.getDailyLogs(historyClassFilter.value);
+    if (logs && logs.length > 0) {
+      const existing = bootstrapData.value.recentLogs || [];
+      const map = new Map();
+      [...logs, ...existing].forEach(l => {
+        const key = `${l.date}_${l.period}_${l.classId}`;
+        if (!map.has(key)) map.set(key, l);
+      });
+      bootstrapData.value.recentLogs = Array.from(map.values());
+    }
+  } catch (e) {
+    console.warn('載入歷史日誌失敗:', e);
+  } finally {
+    isFetchingHistory.value = false;
+  }
+}
+
+function formatLogTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return String(ts);
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch (e) {
+    return String(ts);
+  }
+}
 
 // 當前速記資料模型
 const healthRecords = ref({}); // { [studentId]: '良好' | '不適' | '見習' }
@@ -590,10 +771,11 @@ function initDefaultHealth(classId) {
 
 function handleSelectClass({ classId, period, location }) {
   selectedClassId.value = classId;
-  if (period) currentPeriod.value = period;
+  if (period) currentPeriod.value = Number(period);
   if (location && STANDARD_VENUES.includes(location)) {
     currentVenue.value = location;
   }
+  selectedDate.value = new Date().toLocaleDateString('sv');
   initDefaultHealth(classId);
   currentTab.value = 'record';
   showToast(`已切換至 ${classId} (第 ${period || 2} 節，${currentVenue.value})`, 'success');
@@ -699,10 +881,13 @@ async function handleBatchSaveToGAS() {
     });
   });
 
+  const saveDate = selectedDate.value || new Date().toLocaleDateString('sv');
+  const savePeriod = Number(currentPeriod.value) || 2;
+
   const payload = {
     dailyLog: {
-      date: new Date().toLocaleDateString('sv'), // YYYY-MM-DD
-      period: currentPeriod.value,
+      date: saveDate,
+      period: savePeriod,
       classId: selectedClassId.value,
       location: currentVenue.value,
       actualContent: '常規檢核、技能評量與運動常規表現',
@@ -716,7 +901,20 @@ async function handleBatchSaveToGAS() {
   try {
     const res = await apiService.saveClassSession(payload);
     if (res && res.success) {
-      showToast(res.message || '課堂紀錄與學生成績已批次同步完成！', 'success');
+      showToast(`🎉 已成功同步 ${selectedClassId.value} [${saveDate} 第 ${savePeriod} 節] 課堂紀錄！`, 'success');
+      const newLog = {
+        logId: 'LOG_' + Date.now(),
+        date: saveDate,
+        period: savePeriod,
+        classId: selectedClassId.value,
+        actualContent: payload.dailyLog.actualContent,
+        voiceNotes: payload.dailyLog.voiceNotes,
+        timestamp: new Date().toISOString()
+      };
+      if (!Array.isArray(bootstrapData.value.recentLogs)) {
+        bootstrapData.value.recentLogs = [];
+      }
+      bootstrapData.value.recentLogs.unshift(newLog);
     } else {
       showToast('同步失敗: ' + (res?.error || '請檢查網路連線'), 'error');
     }

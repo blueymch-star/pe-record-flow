@@ -1354,3 +1354,24 @@ export const MOCK_STUDENTS = [
     "medicalNotes": ""
   }
 ];
+
+export const MOCK_RECENT_LOGS = [
+  {
+    logId: 'LOG_20261005_141000_五丁',
+    date: '2026-10-05',
+    period: 6,
+    classId: '五丁',
+    actualContent: '五上第6週：田徑彎道加速跑技巧與接力傳接棒練習',
+    voiceNotes: '全班常規良好，3號腳踝微恙見習',
+    timestamp: '2026-10-05T14:50:00.000Z'
+  },
+  {
+    logId: 'LOG_20261005_151000_六甲',
+    date: '2026-10-05',
+    period: 7,
+    classId: '六甲',
+    actualContent: '六上第6週：籃球運球變向與小組傳切配合教學',
+    voiceNotes: '完成分組對抗，器材清點確實歸位',
+    timestamp: '2026-10-05T15:50:00.000Z'
+  }
+];

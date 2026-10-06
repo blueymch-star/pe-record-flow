@@ -321,9 +321,9 @@ function handleGetBootstrapData() {
   students.forEach(s => { if (s.ClassId) classSet.add(s.ClassId); });
   timetable.forEach(t => { if (t.ClassId) classSet.add(t.ClassId); });
 
-  // 取得最新 10 筆 DailyLogs 作為參考
+  // 取得最新 50 筆 DailyLogs 作為參考 (新至舊排序)
   const logsSheet = ss.getSheetByName(SHEETS.DAILY_LOGS);
-  const recentLogs = getSheetDataAsObjects(logsSheet).slice(-10);
+  const recentLogs = getSheetDataAsObjects(logsSheet).slice(-50).reverse();
 
   return {
     success: true,
@@ -360,10 +360,10 @@ function handleGetNorms() {
 function handleGetDailyLogs(classId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let logs = getSheetDataAsObjects(ss.getSheetByName(SHEETS.DAILY_LOGS));
-  if (classId) {
-    logs = logs.filter(l => String(l.ClassId) === String(classId));
+  if (classId && classId !== 'ALL') {
+    logs = logs.filter(l => String(l.ClassId || l.classId) === String(classId));
   }
-  return { success: true, logs };
+  return { success: true, logs: logs.slice(-50).reverse() };
 }
 
 // -------------------------------------------------------------
