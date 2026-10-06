@@ -173,8 +173,10 @@
                 </select>
               </div>
             </div>
-            <p class="text-xs text-slate-400 mt-1">
-              當前記錄：<strong class="text-emerald-300">{{ selectedDate }}</strong> 第 <strong class="text-emerald-300">{{ currentPeriod }}</strong> 節 ({{ currentVenue }}) · 點擊座號可記態度 ±4 分
+            <p class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span>當前記錄：<strong class="text-emerald-300">{{ selectedDate }}</strong> 第 <strong class="text-emerald-300">{{ currentPeriod }}</strong> 節 ({{ currentVenue }})</span>
+              <span class="text-slate-600">·</span>
+              <span class="truncate max-w-full sm:max-w-xs text-slate-300">📌 進度：<strong class="text-emerald-300">{{ lessonActualContent }}</strong></span>
             </p>
           </div>
 
@@ -274,6 +276,43 @@
             >
               <span>{{ isRecording ? '🛑 停止錄音' : '🎤 開始語音速記' }}</span>
             </button>
+          </div>
+
+          <!-- 教學內容與進度自訂編輯區 (自動依上課日期與班級帶入該週進度) -->
+          <div class="text-left bg-slate-900/90 rounded-2xl p-4 border border-slate-700/80 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <span>📌 本堂教學內容與進度 (課堂日誌內容)：</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                  第 {{ currentLessonWeek }} 週進度自動帶入
+                </span>
+              </label>
+
+              <button
+                type="button"
+                @click="resetLessonContentToDefault"
+                class="active-press text-[11px] text-amber-300 hover:text-white px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 flex items-center gap-1"
+                title="重新帶入該週標準教學進度"
+              >
+                <span>↩️ 重設為預設進度</span>
+              </button>
+            </div>
+
+            <!-- 可編輯文字框 -->
+            <textarea
+              v-model="lessonActualContent"
+              @input="isContentManuallyEdited = true"
+              rows="2"
+              class="w-full bg-slate-950/60 text-xs sm:text-sm text-slate-100 p-3 rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium leading-relaxed resize-none"
+              placeholder="系統自動帶入本週教學進度，亦可在此自由修改..."
+            ></textarea>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 flex-wrap gap-1">
+              <span>班級：<strong class="text-white">{{ selectedClassId }}</strong> · 日期：<strong class="text-emerald-300 font-mono">{{ selectedDate }}</strong></span>
+              <span v-if="matchedCurriculumPlan?.unitTitle" class="text-slate-400">
+                單元：<strong class="text-slate-200">{{ matchedCurriculumPlan.unitTitle }}</strong>
+              </span>
+            </div>
           </div>
 
           <!-- 辨識結果顯示區 -->
@@ -596,7 +635,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import SmartTimetable from './components/SmartTimetable.vue';
 import SeatGrid from './components/SeatGrid.vue';
 import AttitudeDrawer from './components/AttitudeDrawer.vue';
@@ -688,6 +727,72 @@ function formatLogTime(ts) {
   } catch (e) {
     return String(ts);
   }
+}
+
+// -------------------------------------------------------------
+// 教學進度自動推算與自訂編輯邏輯
+// -------------------------------------------------------------
+function getWeekNumberFromDate(dateStr) {
+  if (!dateStr) return 1;
+  const d = new Date(dateStr + 'T00:00:00');
+  const semesterStart = new Date(2026, 7, 31); // 2026-08-31
+  const diffTime = d.getTime() - semesterStart.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 1;
+  const week = Math.floor(diffDays / 7) + 1;
+  return Math.min(Math.max(week, 1), 21);
+}
+
+const currentGrade = computed(() => {
+  const cid = String(selectedClassId.value || '');
+  if (cid.includes('五') || cid.includes('5')) return 5;
+  if (cid.includes('六') || cid.includes('6')) return 6;
+  return 5;
+});
+
+const currentLessonWeek = computed(() => {
+  return getWeekNumberFromDate(selectedDate.value);
+});
+
+const matchedCurriculumPlan = computed(() => {
+  const list = bootstrapData.value.curriculum || [];
+  const g = currentGrade.value;
+  const w = currentLessonWeek.value;
+  return list.find(c => Number(c.grade || c.Grade) === g && Number(c.weekNo || c.WeekNo) === w) || null;
+});
+
+function generateDefaultLessonContent() {
+  const g = currentGrade.value;
+  const w = currentLessonWeek.value;
+  const plan = matchedCurriculumPlan.value;
+  if (plan) {
+    const title = plan.unitTitle || plan.UnitTitle || '';
+    const content = plan.suggestedContent || plan.SuggestedContent || '';
+    if (content) {
+      return `${g === 5 ? '五上' : '六上'}第${w}週 ${title}：${content}`;
+    }
+    return `${g === 5 ? '五上' : '六上'}第${w}週 ${title}`;
+  }
+  return `${g === 5 ? '五上' : '六上'}第${w}週 體育教學活動`;
+}
+
+const lessonActualContent = ref('');
+const isContentManuallyEdited = ref(false);
+
+watch(
+  () => [selectedDate.value, selectedClassId.value, bootstrapData.value.curriculum],
+  () => {
+    if (!isContentManuallyEdited.value) {
+      lessonActualContent.value = generateDefaultLessonContent();
+    }
+  },
+  { immediate: true, deep: true }
+);
+
+function resetLessonContentToDefault() {
+  isContentManuallyEdited.value = false;
+  lessonActualContent.value = generateDefaultLessonContent();
+  showToast('已重設為當週標準教學進度', 'success');
 }
 
 // 當前速記資料模型
@@ -883,6 +988,7 @@ async function handleBatchSaveToGAS() {
 
   const saveDate = selectedDate.value || new Date().toLocaleDateString('sv');
   const savePeriod = Number(currentPeriod.value) || 2;
+  const saveContent = (lessonActualContent.value || '').trim() || generateDefaultLessonContent();
 
   const payload = {
     dailyLog: {
@@ -890,7 +996,7 @@ async function handleBatchSaveToGAS() {
       period: savePeriod,
       classId: selectedClassId.value,
       location: currentVenue.value,
-      actualContent: '常規檢核、技能評量與運動常規表現',
+      actualContent: saveContent,
       voiceNotes: voiceNoteText.value
     },
     healthAttitudeList,
@@ -907,7 +1013,7 @@ async function handleBatchSaveToGAS() {
         date: saveDate,
         period: savePeriod,
         classId: selectedClassId.value,
-        actualContent: payload.dailyLog.actualContent,
+        actualContent: saveContent,
         voiceNotes: payload.dailyLog.voiceNotes,
         timestamp: new Date().toISOString()
       };
