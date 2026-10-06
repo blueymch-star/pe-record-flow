@@ -465,7 +465,7 @@
             </tr>
             <tr v-for="log in filteredAdminLogs" :key="log.logId || (log.date + '_' + log.period + '_' + log.classId)" class="hover:bg-slate-800/40">
               <td class="py-3 px-3 font-mono font-bold text-emerald-400 whitespace-nowrap">
-                📅 {{ log.date }}
+                📅 {{ formatDisplayDate(log.date || log.Date) }}
               </td>
               <td class="py-3 px-3 font-bold text-white whitespace-nowrap">
                 <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-xs font-bold text-emerald-300 mr-1.5">{{ log.classId }}</span>
@@ -894,7 +894,7 @@
             >
               <div class="flex items-center justify-between flex-wrap gap-1.5">
                 <div class="flex items-center gap-2">
-                  <span class="font-mono font-bold text-emerald-400">📅 {{ log.Date || log.date }}</span>
+                  <span class="font-mono font-bold text-emerald-400">📅 {{ formatDisplayDate(log.Date || log.date) }}</span>
                   <span
                     class="px-2 py-0.5 rounded-full text-[11px] font-bold border"
                     :class="(log.HealthStatus || log.healthStatus) === '見習' ? 'bg-amber-950/80 text-amber-300 border-amber-600/50' : ((log.HealthStatus || log.healthStatus) === '良好' ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/40' : 'bg-rose-950/80 text-rose-300 border-rose-600/50')"
@@ -1165,6 +1165,20 @@ async function openStudentProfileModal(student) {
   }
 }
 
+function formatDisplayDate(val) {
+  if (!val) return '';
+  if (typeof val === 'string' && val.includes('T')) {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+  return String(val).slice(0, 10);
+}
+
 const studentAttitudeSummary = computed(() => {
   const logs = studentProfileData.value.healthAttitudeLogs || [];
   let totalDelta = 0;
@@ -1177,8 +1191,11 @@ const studentAttitudeSummary = computed(() => {
     const delta = Number(l.NetAttitudeDelta !== undefined ? l.NetAttitudeDelta : (l.netAttitudeDelta || 0));
     totalDelta += delta;
 
-    if (l.Merits || l.merits) meritsCount++;
-    if (l.Violations || l.violations) violationsCount++;
+    const vList = (l.Violations || l.violations) ? String(l.Violations || l.violations).split(';').map(x => x.trim()).filter(Boolean) : [];
+    violationsCount += vList.length;
+
+    const mList = (l.Merits || l.merits) ? String(l.Merits || l.merits).split(';').map(x => x.trim()).filter(Boolean) : [];
+    meritsCount += mList.length;
 
     const status = l.HealthStatus || l.healthStatus || '良好';
     if (status === '見習') observeCount++;

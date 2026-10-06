@@ -369,6 +369,30 @@ function handleGetDailyLogs(classId) {
   return { success: true, logs: logs.slice(-50).reverse() };
 }
 
+function matchesStudentId(rowStudentId, queryStudentId, rowClassId, queryClassId) {
+  if (!rowStudentId || !queryStudentId) return false;
+  const s1 = String(rowStudentId).trim();
+  const s2 = String(queryStudentId).trim();
+  if (s1 === s2) return true;
+  // 若提供了班級且不同，絕不匹配
+  if (queryClassId && rowClassId && String(queryClassId).trim() !== String(rowClassId).trim()) {
+    return false;
+  }
+  // 若前綴皆含有非數字（例如 五丁 與 六乙），不同班級絕不匹配
+  const prefix1 = s1.replace(/[\d]+$/, '');
+  const prefix2 = s2.replace(/[\d]+$/, '');
+  if (prefix1 && prefix2 && prefix1 !== prefix2) {
+    return false;
+  }
+  // 僅在其中一方為純座號時比對尾數數字
+  const num1 = s1.replace(/^[^\d]+/, '');
+  const num2 = s2.replace(/^[^\d]+/, '');
+  if (num1 && num2 && Number(num1) === Number(num2)) {
+    return true;
+  }
+  return false;
+}
+
 function handleGetStudentHistory(studentId, classId) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -376,7 +400,7 @@ function handleGetStudentHistory(studentId, classId) {
   const haSheet = ss.getSheetByName(SHEETS.HEALTH_ATTITUDE_LOGS);
   let haLogs = getSheetDataAsObjects(haSheet);
   if (studentId) {
-    haLogs = haLogs.filter(h => String(h.StudentId || h.studentId) === String(studentId));
+    haLogs = haLogs.filter(h => matchesStudentId(h.StudentId || h.studentId, studentId, h.ClassId || h.classId, classId));
   } else if (classId && classId !== 'ALL') {
     haLogs = haLogs.filter(h => String(h.ClassId || h.classId) === String(classId));
   }
@@ -385,14 +409,14 @@ function handleGetStudentHistory(studentId, classId) {
   const fitnessSheet = ss.getSheetByName(SHEETS.FITNESS_EXAMS);
   let fitnessList = getSheetDataAsObjects(fitnessSheet);
   if (studentId) {
-    fitnessList = fitnessList.filter(f => String(f.StudentId || f.studentId) === String(studentId));
+    fitnessList = fitnessList.filter(f => matchesStudentId(f.StudentId || f.studentId, studentId, f.ClassId || f.classId, classId));
   }
 
   // 3. 抓取技能測驗成績 (SkillExams)
   const skillsSheet = ss.getSheetByName(SHEETS.SKILL_EXAMS);
   let skillsList = getSheetDataAsObjects(skillsSheet);
   if (studentId) {
-    skillsList = skillsList.filter(s => String(s.StudentId || s.studentId) === String(studentId));
+    skillsList = skillsList.filter(s => matchesStudentId(s.StudentId || s.studentId, studentId, s.ClassId || s.classId, classId));
   }
 
   return {
@@ -854,7 +878,16 @@ function getSheetDataAsObjects(sheet) {
     if (row.every(cell => cell === '' || cell === null)) continue;
     const obj = {};
     headers.forEach((header, colIdx) => {
-      const val = row[colIdx];
+      let val = row[colIdx];
+      // 若儲存格內容為 Date 物件，轉換為 GMT+8 字串，避免 JSON.stringify 轉為 UTC 導致日期少一天
+      if (val instanceof Date) {
+        const hLower = String(header).toLowerCase();
+        if (hLower.includes('timestamp')) {
+          val = Utilities.formatDate(val, 'GMT+8', 'yyyy-MM-dd HH:mm:ss');
+        } else {
+          val = Utilities.formatDate(val, 'GMT+8', 'yyyy-MM-dd');
+        }
+      }
       obj[header] = val;
       // 同步提供 camelCase 屬性，確保相容前端 Vue 資料綁定
       const camelKey = header.charAt(0).toLowerCase() + header.slice(1);

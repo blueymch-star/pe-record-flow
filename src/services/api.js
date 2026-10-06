@@ -101,6 +101,20 @@ export function normalizeCurriculumItem(c) {
   };
 }
 
+export function normalizeDateStr(val) {
+  if (!val) return '';
+  if (typeof val === 'string' && val.includes('T')) {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+  return String(val).slice(0, 10);
+}
+
 export function normalizeBootstrapData(data) {
   if (!data) return data;
   if (Array.isArray(data.students)) {
@@ -116,7 +130,8 @@ export function normalizeBootstrapData(data) {
     data.recentLogs = data.recentLogs.map(log => ({
       ...log,
       logId: log.logId || log.LogId || '',
-      date: log.date || log.Date || '',
+      date: normalizeDateStr(log.date || log.Date || ''),
+      Date: normalizeDateStr(log.Date || log.date || ''),
       period: Number(log.period !== undefined ? log.period : log.Period) || '',
       classId: log.classId || log.ClassId || '',
       actualContent: log.actualContent || log.ActualContent || '',
@@ -387,7 +402,8 @@ export const apiService = {
             return data.logs.map(log => ({
               ...log,
               logId: log.logId || log.LogId || '',
-              date: log.date || log.Date || '',
+              date: normalizeDateStr(log.date || log.Date || ''),
+              Date: normalizeDateStr(log.Date || log.date || ''),
               period: Number(log.period !== undefined ? log.period : log.Period) || '',
               classId: log.classId || log.ClassId || '',
               actualContent: log.actualContent || log.ActualContent || '',
@@ -409,7 +425,11 @@ export const apiService = {
         if (classId && classId !== 'ALL') {
           logs = logs.filter(l => String(l.classId || l.ClassId) === String(classId));
         }
-        return logs;
+        return logs.map(l => ({
+          ...l,
+          date: normalizeDateStr(l.date || l.Date || ''),
+          Date: normalizeDateStr(l.Date || l.date || '')
+        }));
       } catch (e) {}
     }
     return [];
@@ -428,6 +448,13 @@ export const apiService = {
         if (resp.ok) {
           const data = await resp.json();
           if (data && data.success) {
+            if (Array.isArray(data.healthAttitudeLogs)) {
+              data.healthAttitudeLogs = data.healthAttitudeLogs.map(l => ({
+                ...l,
+                date: normalizeDateStr(l.date || l.Date || ''),
+                Date: normalizeDateStr(l.Date || l.date || '')
+              }));
+            }
             return data;
           }
         }

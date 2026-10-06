@@ -587,7 +587,7 @@
             <div class="flex items-center justify-between flex-wrap gap-1.5">
               <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold">
-                  📅 {{ log.date }}
+                  📅 {{ formatLogDate(log.date || log.Date) }}
                 </span>
                 <span class="text-xs font-bold text-white">
                   {{ log.classId }} · 第 {{ log.period }} 節
@@ -716,6 +716,20 @@ async function fetchHistoryLogs() {
   } finally {
     isFetchingHistory.value = false;
   }
+}
+
+function formatLogDate(val) {
+  if (!val) return '';
+  if (typeof val === 'string' && val.includes('T')) {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  }
+  return String(val).slice(0, 10);
 }
 
 function formatLogTime(ts) {
