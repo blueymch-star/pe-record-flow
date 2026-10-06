@@ -290,6 +290,9 @@ function doGet(e) {
       case 'getDailyLogs':
         responseData = handleGetDailyLogs(e.parameter.classId);
         break;
+      case 'getStudentHistory':
+        responseData = handleGetStudentHistory(e.parameter.studentId, e.parameter.classId);
+        break;
       default:
         responseData = { success: false, error: 'Unknown action: ' + action };
     }
@@ -364,6 +367,42 @@ function handleGetDailyLogs(classId) {
     logs = logs.filter(l => String(l.ClassId || l.classId) === String(classId));
   }
   return { success: true, logs: logs.slice(-50).reverse() };
+}
+
+function handleGetStudentHistory(studentId, classId) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // 1. 抓取健康與態度歷程 (HealthAttitudeLogs)
+  const haSheet = ss.getSheetByName(SHEETS.HEALTH_ATTITUDE_LOGS);
+  let haLogs = getSheetDataAsObjects(haSheet);
+  if (studentId) {
+    haLogs = haLogs.filter(h => String(h.StudentId || h.studentId) === String(studentId));
+  } else if (classId && classId !== 'ALL') {
+    haLogs = haLogs.filter(h => String(h.ClassId || h.classId) === String(classId));
+  }
+
+  // 2. 抓取體適能成績 (FitnessExams)
+  const fitnessSheet = ss.getSheetByName(SHEETS.FITNESS_EXAMS);
+  let fitnessList = getSheetDataAsObjects(fitnessSheet);
+  if (studentId) {
+    fitnessList = fitnessList.filter(f => String(f.StudentId || f.studentId) === String(studentId));
+  }
+
+  // 3. 抓取技能測驗成績 (SkillExams)
+  const skillsSheet = ss.getSheetByName(SHEETS.SKILL_EXAMS);
+  let skillsList = getSheetDataAsObjects(skillsSheet);
+  if (studentId) {
+    skillsList = skillsList.filter(s => String(s.StudentId || s.studentId) === String(studentId));
+  }
+
+  return {
+    success: true,
+    studentId: studentId || '',
+    classId: classId || '',
+    healthAttitudeLogs: haLogs.slice(-100).reverse(),
+    fitness: fitnessList[0] || null,
+    skills: skillsList
+  };
 }
 
 // -------------------------------------------------------------

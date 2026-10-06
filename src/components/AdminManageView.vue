@@ -54,7 +54,7 @@
     <div v-show="activeSubTab === 'students'" class="space-y-4">
       <!-- 班級操作列 -->
       <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5 w-full sm:w-auto">
+        <div class="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
           <label class="text-xs font-bold text-slate-300 whitespace-nowrap">目前管理班級：</label>
           <select
             v-model="selectedClass"
@@ -64,6 +64,16 @@
               {{ c }} ({{ getStudentCountByClass(c) }} 人)
             </option>
           </select>
+
+          <!-- 快速搜尋學生姓名/座號以查閱履歷 -->
+          <div class="relative w-full sm:w-40">
+            <input
+              v-model="studentFilterKeyword"
+              type="text"
+              placeholder="🔍 查學生/座號..."
+              class="w-full bg-slate-800 text-slate-100 text-xs rounded-xl px-2.5 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
 
           <!-- 新增班級按鈕 -->
           <button
@@ -154,7 +164,15 @@
                 {{ student.seatNo ?? student.SeatNo }}
               </td>
               <td class="py-2 px-3 font-bold text-white whitespace-nowrap min-w-[76px]">
-                {{ student.name || student.Name }}
+                <button
+                  type="button"
+                  @click="openStudentProfileModal(student)"
+                  class="font-bold text-white hover:text-emerald-300 transition text-left underline decoration-slate-600 underline-offset-4 flex items-center gap-1 group cursor-pointer"
+                  title="點擊查看歷史履歷與平時表現"
+                >
+                  <span>{{ student.name || student.Name }}</span>
+                  <span class="text-[10px] text-slate-500 group-hover:text-emerald-400">📜</span>
+                </button>
               </td>
               <td class="py-2 px-2 text-center font-semibold" :class="(student.gender || student.Gender) === 'M' ? 'text-blue-300' : 'text-pink-300'">
                 {{ (student.gender || student.Gender) === 'M' ? '男' : '女' }}
@@ -170,6 +188,13 @@
               </td>
               <td class="py-2 px-2 text-center">
                 <div class="flex items-center justify-center gap-1.5">
+                  <button
+                    @click="openStudentProfileModal(student)"
+                    class="p-1 px-2 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold flex items-center gap-1 active-press"
+                    title="檢視學生歷史履歷"
+                  >
+                    <span>📜 履歷</span>
+                  </button>
                   <button
                     @click="openEditStudentModal(student)"
                     class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
@@ -745,13 +770,250 @@
       </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- 彈窗：學生個人歷史履歷與平時表現 Modal -->
+    <!-- ========================================================================= -->
+    <div
+      v-if="showStudentProfileModal"
+      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+    >
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl p-4 sm:p-5 max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh] space-y-4">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-black text-lg">
+              {{ activeProfileStudent?.seatNo }}
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-black text-base sm:text-lg text-white">
+                  {{ activeProfileStudent?.name }}
+                </h3>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" :class="activeProfileStudent?.gender === 'M' ? 'text-blue-300' : 'text-pink-300'">
+                  {{ activeProfileStudent?.gender === 'M' ? '👦 男生' : '👧 女生' }}
+                </span>
+                <span class="text-xs font-mono text-slate-400">
+                  {{ activeProfileStudent?.classId }} · {{ activeProfileStudent?.studentId }}
+                </span>
+              </div>
+              <p v-if="activeProfileStudent?.medicalNotes" class="text-xs text-rose-300 flex items-center gap-1 mt-0.5 font-semibold">
+                <span>❤️ 先天痼疾警示：</span>
+                <span>{{ activeProfileStudent?.medicalNotes }}</span>
+              </p>
+            </div>
+          </div>
+          <button @click="showStudentProfileModal = false" class="text-slate-400 hover:text-white p-1">✕</button>
+        </div>
+
+        <!-- 評量概況卡片 (Summary Cards) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <!-- 態度總分 -->
+          <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-center space-y-0.5">
+            <div class="text-[11px] font-bold text-slate-400">⚡ 學習態度總評</div>
+            <div class="text-xl font-black font-mono" :class="studentAttitudeSummary.finalScore >= 80 ? 'text-emerald-400' : 'text-amber-400'">
+              {{ studentAttitudeSummary.finalScore }} 分
+            </div>
+            <div class="text-[10px] text-slate-400">
+              基準 100 ({{ studentAttitudeSummary.totalDelta >= 0 ? '+' : '' }}{{ studentAttitudeSummary.totalDelta }})
+            </div>
+          </div>
+
+          <!-- 見習次數 -->
+          <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-center space-y-0.5">
+            <div class="text-[11px] font-bold text-slate-400">🤕 課堂見習次數</div>
+            <div class="text-xl font-black font-mono text-amber-300">
+              {{ studentAttitudeSummary.observeCount }} 次
+            </div>
+            <div class="text-[10px] text-slate-400">
+              身體微恙/見習旁聽
+            </div>
+          </div>
+
+          <!-- 優良表現標籤數 -->
+          <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-center space-y-0.5">
+            <div class="text-[11px] font-bold text-slate-400">🌟 優良表現 (+4)</div>
+            <div class="text-xl font-black font-mono text-teal-300">
+              {{ studentAttitudeSummary.meritsCount }} 次
+            </div>
+            <div class="text-[10px] text-slate-400">熱心收器材/互助</div>
+          </div>
+
+          <!-- 違規扣分次數 -->
+          <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-center space-y-0.5">
+            <div class="text-[11px] font-bold text-slate-400">⚠️ 違規紀錄 (-4)</div>
+            <div class="text-xl font-black font-mono text-rose-300">
+              {{ studentAttitudeSummary.violationsCount }} 次
+            </div>
+            <div class="text-[10px] text-slate-400">未穿鞋服/秩序干擾</div>
+          </div>
+        </div>
+
+        <!-- 履歷子分頁切換 -->
+        <div class="flex items-center gap-1.5 p-1 bg-slate-800/80 rounded-xl border border-slate-700 text-xs font-bold">
+          <button
+            @click="profileActiveTab = 'attitude'"
+            class="flex-1 py-1.5 rounded-lg transition text-center"
+            :class="profileActiveTab === 'attitude' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+          >
+            📋 健康與態度歷程 ({{ studentProfileData.healthAttitudeLogs.length }})
+          </button>
+          <button
+            @click="profileActiveTab = 'fitness'"
+            class="flex-1 py-1.5 rounded-lg transition text-center"
+            :class="profileActiveTab === 'fitness' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+          >
+            🏃 體適能紀錄
+          </button>
+          <button
+            @click="profileActiveTab = 'skills'"
+            class="flex-1 py-1.5 rounded-lg transition text-center"
+            :class="profileActiveTab === 'skills' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'"
+          >
+            🎯 技能測驗紀錄 ({{ studentProfileData.skills.length }})
+          </button>
+        </div>
+
+        <!-- 內容展示區 -->
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[180px]">
+          <div v-if="isLoadingStudentProfile" class="py-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+            <span class="inline-block animate-spin text-base">⏳</span>
+            <span>正在由雲端資料庫載入 {{ activeProfileStudent?.name }} 的歷史履歷...</span>
+          </div>
+
+          <!-- 子分頁 1：健康與態度詳細歷程 -->
+          <div v-else-if="profileActiveTab === 'attitude'" class="space-y-2">
+            <div v-if="studentProfileData.healthAttitudeLogs.length === 0" class="py-10 text-center text-slate-500 text-xs">
+              目前尚無此學生的課堂健康與態度紀錄。<br/>
+              每次課後速記同步後，系統將自動追加留存於此。
+            </div>
+
+            <div
+              v-for="log in studentProfileData.healthAttitudeLogs"
+              :key="log.LogId || log.logId || (log.Date + '_' + log.Timestamp)"
+              class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/80 space-y-1.5 text-xs"
+            >
+              <div class="flex items-center justify-between flex-wrap gap-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-bold text-emerald-400">📅 {{ log.Date || log.date }}</span>
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[11px] font-bold border"
+                    :class="(log.HealthStatus || log.healthStatus) === '見習' ? 'bg-amber-950/80 text-amber-300 border-amber-600/50' : ((log.HealthStatus || log.healthStatus) === '良好' ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/40' : 'bg-rose-950/80 text-rose-300 border-rose-600/50')"
+                  >
+                    {{ log.HealthStatus || log.healthStatus || '良好' }}
+                  </span>
+                </div>
+                <div class="font-mono font-bold" :class="Number(log.NetAttitudeDelta !== undefined ? log.NetAttitudeDelta : (log.netAttitudeDelta || 0)) >= 0 ? 'text-emerald-400' : 'text-rose-400'">
+                  態度加減分：{{ Number(log.NetAttitudeDelta !== undefined ? log.NetAttitudeDelta : (log.netAttitudeDelta || 0)) > 0 ? '+' : '' }}{{ log.NetAttitudeDelta !== undefined ? log.NetAttitudeDelta : (log.netAttitudeDelta || 0) }} 分
+                </div>
+              </div>
+
+              <!-- 行為項目標籤 -->
+              <div class="flex flex-wrap gap-1 pt-0.5">
+                <!-- 優良 -->
+                <span
+                  v-for="m in (log.Merits || log.merits ? String(log.Merits || log.merits).split(';').map(x => x.trim()).filter(Boolean) : [])"
+                  :key="m"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-950/80 text-teal-300 border border-teal-700/60 text-[11px]"
+                >
+                  🌟 {{ m }} (+4)
+                </span>
+                <!-- 違規 -->
+                <span
+                  v-for="v in (log.Violations || log.violations ? String(log.Violations || log.violations).split(';').map(x => x.trim()).filter(Boolean) : [])"
+                  :key="v"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-700/60 text-[11px]"
+                >
+                  ⚠️ {{ v }} (-4)
+                </span>
+              </div>
+
+              <!-- 觀察筆記 -->
+              <div v-if="log.ObservationNotes || log.observationNotes" class="text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                <span class="text-slate-400 font-bold">備忘註記：</span>{{ log.ObservationNotes || log.observationNotes }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 子分頁 2：體適能紀錄 -->
+          <div v-else-if="profileActiveTab === 'fitness'" class="space-y-3">
+            <div v-if="!studentProfileData.fitness" class="py-10 text-center text-slate-500 text-xs">
+              尚未有體適能檢測紀錄。
+            </div>
+            <div v-else class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
+                <span class="text-slate-400 font-bold">仰臥捲腹：</span>
+                <div class="text-lg font-black font-mono text-emerald-400">
+                  {{ studentProfileData.fitness.CurlUps || studentProfileData.fitness.curlUps || '-' }} 次
+                </div>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
+                <span class="text-slate-400 font-bold">坐姿體前彎：</span>
+                <div class="text-lg font-black font-mono text-emerald-400">
+                  {{ studentProfileData.fitness.SitAndReach || studentProfileData.fitness.sitAndReach || '-' }} cm
+                </div>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
+                <span class="text-slate-400 font-bold">立定跳遠：</span>
+                <div class="text-lg font-black font-mono text-emerald-400">
+                  {{ studentProfileData.fitness.StandingLongJump || studentProfileData.fitness.standingLongJump || '-' }} cm
+                </div>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
+                <span class="text-slate-400 font-bold">800m 跑走：</span>
+                <div class="text-lg font-black font-mono text-emerald-400">
+                  {{ studentProfileData.fitness.CardioRun || studentProfileData.fitness.cardioRun || '-' }} 秒
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 子分頁 3：技能測驗紀錄 -->
+          <div v-else-if="profileActiveTab === 'skills'" class="space-y-2">
+            <div v-if="studentProfileData.skills.length === 0" class="py-10 text-center text-slate-500 text-xs">
+              尚未有技能測驗紀錄。
+            </div>
+            <div
+              v-for="skill in studentProfileData.skills"
+              :key="skill.ExamIndex || skill.examIndex"
+              class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 flex items-center justify-between text-xs"
+            >
+              <div>
+                <span class="text-slate-400 font-bold">測驗 {{ skill.ExamIndex || skill.examIndex }}：</span>
+                <span class="font-bold text-white ml-1">{{ skill.ItemName || skill.itemName || '自訂項目' }}</span>
+              </div>
+              <div class="font-mono font-black text-emerald-400">
+                {{ skill.IsExempt || skill.isExempt ? '免測' : (skill.RawValue || skill.rawValue || '-') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+          <button
+            @click="copyStudentSummaryText"
+            class="active-press px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1.5"
+            title="複製該學生期末評量摘要"
+          >
+            <span>📋 複製評量評語</span>
+          </button>
+          <button
+            @click="showStudentProfileModal = false"
+            class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { STANDARD_VENUES } from '../services/mockData';
-import { normalizeStudent, normalizeTimetableItem, normalizeCurriculumItem } from '../services/api';
+import { apiService, normalizeStudent, normalizeTimetableItem, normalizeCurriculumItem } from '../services/api';
 
 const props = defineProps({
   students: {
@@ -847,14 +1109,104 @@ const classList = computed(() => {
   return localClasses.value.length > 0 ? localClasses.value : ['五丁', '五戊', '六甲', '六乙'];
 });
 
+const studentFilterKeyword = ref('');
+
 const currentClassStudents = computed(() => {
-  return localStudents.value
+  let list = localStudents.value
     .filter(s => String(s.classId || s.ClassId) === String(selectedClass.value))
     .sort((a, b) => Number(a.seatNo || a.SeatNo || 0) - Number(b.seatNo || b.SeatNo || 0));
+
+  if (studentFilterKeyword.value.trim()) {
+    const kw = studentFilterKeyword.value.trim().toLowerCase();
+    list = list.filter(s => 
+      String(s.name || s.Name || '').toLowerCase().includes(kw) ||
+      String(s.seatNo || s.SeatNo || '').includes(kw) ||
+      String(s.studentId || s.StudentId || '').toLowerCase().includes(kw)
+    );
+  }
+  return list;
 });
 
 function getStudentCountByClass(classId) {
   return localStudents.value.filter(s => String(s.classId || s.ClassId) === String(classId)).length;
+}
+
+// -------------------------------------------------------------
+// 0. 學生個人歷史履歷查詢邏輯 (健康、態度、體適能、技能)
+// -------------------------------------------------------------
+const showStudentProfileModal = ref(false);
+const activeProfileStudent = ref(null);
+const isLoadingStudentProfile = ref(false);
+const studentProfileData = ref({
+  healthAttitudeLogs: [],
+  fitness: null,
+  skills: []
+});
+const profileActiveTab = ref('attitude'); // 'attitude' | 'fitness' | 'skills'
+
+async function openStudentProfileModal(student) {
+  activeProfileStudent.value = student;
+  showStudentProfileModal.value = true;
+  profileActiveTab.value = 'attitude';
+  isLoadingStudentProfile.value = true;
+  try {
+    const res = await apiService.getStudentHistory(student.studentId || student.StudentId, student.classId || student.ClassId);
+    if (res && res.success) {
+      studentProfileData.value = {
+        healthAttitudeLogs: res.healthAttitudeLogs || [],
+        fitness: res.fitness || null,
+        skills: res.skills || []
+      };
+    }
+  } catch (e) {
+    console.warn('載入學生履歷失敗:', e);
+  } finally {
+    isLoadingStudentProfile.value = false;
+  }
+}
+
+const studentAttitudeSummary = computed(() => {
+  const logs = studentProfileData.value.healthAttitudeLogs || [];
+  let totalDelta = 0;
+  let meritsCount = 0;
+  let violationsCount = 0;
+  let observeCount = 0;
+  let sickCount = 0;
+
+  logs.forEach(l => {
+    const delta = Number(l.NetAttitudeDelta !== undefined ? l.NetAttitudeDelta : (l.netAttitudeDelta || 0));
+    totalDelta += delta;
+
+    if (l.Merits || l.merits) meritsCount++;
+    if (l.Violations || l.violations) violationsCount++;
+
+    const status = l.HealthStatus || l.healthStatus || '良好';
+    if (status === '見習') observeCount++;
+    if (status === '不適' || status === '受傷') sickCount++;
+  });
+
+  const rawScore = 100 + totalDelta;
+  const finalScore = Math.max(60, Math.min(100, rawScore));
+
+  return {
+    baseScore: 100,
+    totalDelta,
+    finalScore,
+    meritsCount,
+    violationsCount,
+    observeCount,
+    sickCount,
+    totalSessions: logs.length
+  };
+});
+
+function copyStudentSummaryText() {
+  const s = activeProfileStudent.value;
+  if (!s) return;
+  const sum = studentAttitudeSummary.value;
+  const text = `${s.classId} ${s.seatNo}號 ${s.name}：學習態度總評 ${sum.finalScore} 分（基準100分，累計加扣分 ${sum.totalDelta >= 0 ? '+' : ''}${sum.totalDelta} 分）。本學期見習 ${sum.observeCount} 次、身體不適 ${sum.sickCount} 次。課堂表現${sum.finalScore >= 90 ? '優良主動' : (sum.finalScore >= 80 ? '良好穩定' : '尚可需再加強常規')}。`;
+  navigator.clipboard.writeText(text);
+  emit('toast', `📋 已複製 ${s.name} 的學習評量摘要至剪貼簿！`, 'success');
 }
 
 // -------------------------------------------------------------

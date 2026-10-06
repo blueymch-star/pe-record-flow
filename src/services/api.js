@@ -416,6 +416,38 @@ export const apiService = {
   },
 
   /**
+   * 查詢個別學生歷史履歷 (包含健康狀況、學習態度加減分軌跡、體適能與技能測驗)
+   */
+  async getStudentHistory(studentId, classId = '') {
+    const gasUrl = this.getGasUrl();
+    const token = this.getApiToken();
+    if (gasUrl) {
+      try {
+        const queryUrl = `${gasUrl}?action=getStudentHistory&token=${encodeURIComponent(token)}&studentId=${encodeURIComponent(studentId || '')}&classId=${encodeURIComponent(classId || '')}&_t=${Date.now()}`;
+        const resp = await fetch(queryUrl, { cache: 'no-store' });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.success) {
+            return data;
+          }
+        }
+      } catch (e) {
+        console.warn('獲取學生歷史履歷失敗:', e);
+      }
+    }
+
+    // 本機備援快取
+    return {
+      success: true,
+      studentId,
+      classId,
+      healthAttitudeLogs: [],
+      fitness: null,
+      skills: []
+    };
+  },
+
+  /**
    * 後台儲存學生名冊 (包含本機即時持久化與 GAS 同步)
    */
   async saveStudents(students) {
