@@ -212,17 +212,29 @@ function seedInitialData(ss) {
     // 欄位：Gender, Age, Item, PR25, PR50, PR75, PR85
     // 注意：CardioRun (800m跑走) 單位為秒，數值越低越佳，PR25門檻秒數較高
     const defaultNorms = [
-      // 10~11歲 男生 (國小高年級)
-      ['M', 11, 'CurlUps', 18, 26, 35, 42],          // 次數
-      ['M', 11, 'SitAndReach', 18, 23, 29, 34],      // cm
-      ['M', 11, 'StandingLongJump', 135, 155, 175, 190], // cm
-      ['M', 11, 'CardioRun', 310, 275, 245, 225],    // 秒 (越快越好)
+      // 11歲 男生 (五年級)
+      ['M', 11, 'CurlUps', 12, 21, 32, 41],
+      ['M', 11, 'SitAndReach', 18, 24, 29, 32],
+      ['M', 11, 'StandingLongJump', 128, 144, 160, 169],
+      ['M', 11, 'CardioRun', 322, 280, 242, 228],
 
-      // 10~11歲 女生
-      ['F', 11, 'CurlUps', 14, 21, 30, 36],
-      ['F', 11, 'SitAndReach', 20, 26, 32, 37],
-      ['F', 11, 'StandingLongJump', 120, 140, 158, 172],
-      ['F', 11, 'CardioRun', 330, 295, 265, 240]
+      // 11歲 女生 (五年級)
+      ['F', 11, 'CurlUps', 12, 20, 31, 39],
+      ['F', 11, 'SitAndReach', 24, 29, 34, 37],
+      ['F', 11, 'StandingLongJump', 117, 131, 146, 155],
+      ['F', 11, 'CardioRun', 329, 296, 262, 249],
+
+      // 12歲 男生 (六年級)
+      ['M', 12, 'CurlUps', 14, 24, 35, 42],
+      ['M', 12, 'SitAndReach', 17, 23, 29, 31],
+      ['M', 12, 'StandingLongJump', 136, 155, 172, 181],
+      ['M', 12, 'CardioRun', 297, 257, 223, 212],
+
+      // 12歲 女生 (六年級)
+      ['F', 12, 'CurlUps', 12, 21, 32, 40],
+      ['F', 12, 'SitAndReach', 23, 29, 35, 38],
+      ['F', 12, 'StandingLongJump', 120, 135, 150, 162],
+      ['F', 12, 'CardioRun', 315, 284, 255, 243]
     ];
     normsSheet.getRange(2, 1, defaultNorms.length, defaultNorms[0].length).setValues(defaultNorms);
   }

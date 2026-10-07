@@ -383,6 +383,7 @@
           :curriculum="bootstrapData.curriculum"
           :classes="bootstrapData.classes"
           :recent-logs="bootstrapData.recentLogs"
+          :norms="bootstrapData.norms"
           @save-students="handleSaveStudentsFromAdmin"
           @save-timetable="handleSaveTimetableFromAdmin"
           @save-curriculum="handleSaveCurriculumFromAdmin"
@@ -425,6 +426,8 @@
       :is-open="isKeypadOpen"
       :students="currentStudents"
       :existing-records="fitnessRecords"
+      :norms="bootstrapData.norms"
+      :class-id="selectedClassId"
       @close="isKeypadOpen = false"
       @save-record="handleSaveFitnessRecord"
     />

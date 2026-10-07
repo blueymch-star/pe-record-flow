@@ -939,29 +939,84 @@
             <div v-if="!studentProfileData.fitness" class="py-10 text-center text-slate-500 text-xs">
               尚未有體適能檢測紀錄。
             </div>
-            <div v-else class="grid grid-cols-2 gap-2 text-xs">
-              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
-                <span class="text-slate-400 font-bold">仰臥捲腹：</span>
-                <div class="text-lg font-black font-mono text-emerald-400">
-                  {{ studentProfileData.fitness.CurlUps || studentProfileData.fitness.curlUps || '-' }} 次
-                </div>
+            <div v-else class="space-y-2.5">
+              <div class="flex items-center justify-between text-xs text-slate-400 bg-slate-800/40 px-3 py-1.5 rounded-xl border border-slate-700/60">
+                <span class="flex items-center gap-1.5">
+                  <span>對照標準：</span>
+                  <span class="text-emerald-400 font-bold font-mono">{{ getNormGradeLabel(profileStudentNormAge) }}</span>
+                </span>
+                <span class="text-[11px] text-slate-400">
+                  性別：{{ (activeProfileStudent?.gender === 'M' || activeProfileStudent?.Gender === 'M') ? '👦 男生' : '👧 女生' }}
+                </span>
               </div>
-              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
-                <span class="text-slate-400 font-bold">坐姿體前彎：</span>
-                <div class="text-lg font-black font-mono text-emerald-400">
-                  {{ studentProfileData.fitness.SitAndReach || studentProfileData.fitness.sitAndReach || '-' }} cm
+
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <!-- 仰臥捲腹 -->
+                <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-bold">仰臥捲腹：</span>
+                    <span
+                      v-if="getFitnessEval('CurlUps')"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full font-bold border"
+                      :class="getFitnessBadgeClass('CurlUps')"
+                    >
+                      {{ getFitnessEval('CurlUps').levelText }}
+                    </span>
+                  </div>
+                  <div class="text-lg font-black font-mono text-emerald-400">
+                    {{ studentProfileData.fitness.CurlUps || studentProfileData.fitness.curlUps || '-' }} 次
+                  </div>
                 </div>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
-                <span class="text-slate-400 font-bold">立定跳遠：</span>
-                <div class="text-lg font-black font-mono text-emerald-400">
-                  {{ studentProfileData.fitness.StandingLongJump || studentProfileData.fitness.standingLongJump || '-' }} cm
+
+                <!-- 坐姿體前彎 -->
+                <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-bold">坐姿體前彎：</span>
+                    <span
+                      v-if="getFitnessEval('SitAndReach')"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full font-bold border"
+                      :class="getFitnessBadgeClass('SitAndReach')"
+                    >
+                      {{ getFitnessEval('SitAndReach').levelText }}
+                    </span>
+                  </div>
+                  <div class="text-lg font-black font-mono text-emerald-400">
+                    {{ studentProfileData.fitness.SitAndReach || studentProfileData.fitness.sitAndReach || '-' }} cm
+                  </div>
                 </div>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1">
-                <span class="text-slate-400 font-bold">800m 跑走：</span>
-                <div class="text-lg font-black font-mono text-emerald-400">
-                  {{ studentProfileData.fitness.CardioRun || studentProfileData.fitness.cardioRun || '-' }} 秒
+
+                <!-- 立定跳遠 -->
+                <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-bold">立定跳遠：</span>
+                    <span
+                      v-if="getFitnessEval('StandingLongJump')"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full font-bold border"
+                      :class="getFitnessBadgeClass('StandingLongJump')"
+                    >
+                      {{ getFitnessEval('StandingLongJump').levelText }}
+                    </span>
+                  </div>
+                  <div class="text-lg font-black font-mono text-emerald-400">
+                    {{ studentProfileData.fitness.StandingLongJump || studentProfileData.fitness.standingLongJump || '-' }} cm
+                  </div>
+                </div>
+
+                <!-- 800m 跑走 -->
+                <div class="p-3 rounded-2xl bg-slate-800/60 border border-slate-700 space-y-1.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-bold">800m 跑走：</span>
+                    <span
+                      v-if="getFitnessEval('CardioRun')"
+                      class="text-[10px] px-1.5 py-0.5 rounded-full font-bold border"
+                      :class="getFitnessBadgeClass('CardioRun')"
+                    >
+                      {{ getFitnessEval('CardioRun').levelText }}
+                    </span>
+                  </div>
+                  <div class="text-lg font-black font-mono text-emerald-400">
+                    {{ studentProfileData.fitness.CardioRun || studentProfileData.fitness.cardioRun || '-' }} 秒
+                  </div>
                 </div>
               </div>
             </div>
@@ -1014,6 +1069,7 @@
 import { ref, computed, watch } from 'vue';
 import { STANDARD_VENUES } from '../services/mockData';
 import { apiService, normalizeStudent, normalizeTimetableItem, normalizeCurriculumItem } from '../services/api';
+import { evaluateFitness, getStudentNormAge, getNormGradeLabel } from '../services/norms';
 
 const props = defineProps({
   students: {
@@ -1033,6 +1089,10 @@ const props = defineProps({
     default: () => ['五丁', '五戊', '六甲', '六乙']
   },
   recentLogs: {
+    type: Array,
+    default: () => []
+  },
+  norms: {
     type: Array,
     default: () => []
   }
@@ -1163,6 +1223,31 @@ async function openStudentProfileModal(student) {
   } finally {
     isLoadingStudentProfile.value = false;
   }
+}
+
+// 當前學生對照常模年齡 (五年級對照 11 歲、六年級對照 12 歲)
+const profileStudentNormAge = computed(() => {
+  return getStudentNormAge(activeProfileStudent.value);
+});
+
+function getFitnessEval(itemId) {
+  if (!studentProfileData.value.fitness || !activeProfileStudent.value) return null;
+  const fit = studentProfileData.value.fitness;
+  const raw = fit[itemId] ?? fit[itemId.charAt(0).toLowerCase() + itemId.slice(1)];
+  if (raw === undefined || raw === null || raw === '' || isNaN(raw)) return null;
+  const gender = (activeProfileStudent.value.gender || activeProfileStudent.value.Gender || 'M').toUpperCase();
+  return evaluateFitness(gender, profileStudentNormAge.value, itemId, Number(raw), props.norms);
+}
+
+function getFitnessBadgeClass(itemId) {
+  const ev = getFitnessEval(itemId);
+  if (!ev) return '';
+  if (ev.isWarning) return 'bg-rose-950/80 text-rose-300 border-rose-600/60 animate-pulse';
+  if (ev.prBadge === 'yellow') return 'bg-amber-950/80 text-amber-300 border-amber-600/50';
+  if (ev.prBadge === 'blue') return 'bg-blue-950/80 text-blue-300 border-blue-600/50';
+  if (ev.prBadge === 'indigo') return 'bg-indigo-950/80 text-indigo-300 border-indigo-600/50';
+  if (ev.prBadge === 'emerald') return 'bg-emerald-950/80 text-emerald-300 border-emerald-600/50';
+  return 'bg-slate-800 text-slate-300 border-slate-700';
 }
 
 function formatDisplayDate(val) {

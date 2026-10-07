@@ -37,7 +37,7 @@
             <div class="flex items-center gap-2">
               <span class="text-base font-black text-white">{{ currentStudent?.name }}</span>
               <span class="text-xs font-semibold text-slate-400">
-                {{ currentStudent?.gender === 'M' ? '男' : '女' }} · {{ currentStudent?.age || 11 }}歲
+                {{ currentStudent?.gender === 'M' ? '男' : '女' }} · {{ getNormGradeLabel(studentNormAge) }}
               </span>
             </div>
             <p v-if="currentStudent?.medicalNotes" class="text-[11px] text-red-400 truncate max-w-[200px]">
@@ -128,7 +128,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { FITNESS_ITEMS, evaluateFitness } from '../services/norms';
+import { FITNESS_ITEMS, evaluateFitness, getStudentNormAge, getNormGradeLabel } from '../services/norms';
 
 const props = defineProps({
   isOpen: {
@@ -143,6 +143,16 @@ const props = defineProps({
   existingRecords: {
     type: Object,
     default: () => ({})
+  },
+  // 體適能常模表 (來自資料庫或預設)
+  norms: {
+    type: Array,
+    default: () => []
+  },
+  // 當前選定班級 (用於五年級對照11歲、六年級對照12歲)
+  classId: {
+    type: String,
+    default: ''
   }
 });
 
@@ -158,6 +168,11 @@ const currentStudent = computed(() => {
   return props.students[currentIndex.value] || null;
 });
 
+// 當前學生對照常模年齡 (五年級對照 11 歲、六年級對照 12 歲)
+const studentNormAge = computed(() => {
+  return getStudentNormAge(currentStudent.value, props.classId);
+});
+
 const activeItemConfig = computed(() => {
   return fitnessItems.find(i => i.id === activeItemId.value) || fitnessItems[0];
 });
@@ -169,9 +184,10 @@ const normResult = computed(() => {
   }
   return evaluateFitness(
     currentStudent.value.gender || 'M',
-    currentStudent.value.age || 11,
+    studentNormAge.value,
     activeItemId.value,
-    Number(displayValue.value)
+    Number(displayValue.value),
+    props.norms
   );
 });
 
